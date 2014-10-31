@@ -1,4 +1,4 @@
-apid = require '../js/apid'
+apid = require '../../js/apid'
 
 exposable =
   math:
@@ -14,5 +14,5 @@ apid.expose 'sumWithPing', (a, b, cb) ->
     cb null, a + b
 
 
-apid 'exampleapid', false, (err) ->
+apid.server 'exampleapid', (err) ->
   console.log 'server ready', err, apid.exposed

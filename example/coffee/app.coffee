@@ -1,5 +1,5 @@
 console.time 'init'
-apid = require '../js/apid'
+apid = require '../../js/apid'
 console.timeEnd 'init'
 
 

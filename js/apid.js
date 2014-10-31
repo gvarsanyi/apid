@@ -58,6 +58,9 @@ apid = function(name_id, entry, callback) {
         pidfile: file + '.pid',
         silent: true
       });
+      if (require('./lib/daemon-control')(daemon, name_id)) {
+        return;
+      }
       daemon.on('started', connect).on('running', connect).on('error', function(err) {
         throw err;
       });
@@ -108,6 +111,10 @@ apid.onReady = function(callback) {
   }
   ready_cue.push(callback);
   return ready;
+};
+
+apid.server = function(name_id, callback) {
+  return apid(name_id, false, callback);
 };
 
 module.exports = apid;

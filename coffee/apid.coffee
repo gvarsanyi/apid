@@ -48,6 +48,9 @@ apid = (name_id, entry, callback) ->
         pidfile: file + '.pid'
         silent:  true
 
+      if require('./lib/daemon-control') daemon, name_id
+        return # daemon control was called
+
       daemon
       .on('started', connect)
       .on('running', connect)
@@ -90,6 +93,9 @@ apid.onReady = (callback) ->
     callback()
   ready_cue.push callback
   ready
+
+apid.server = (name_id, callback) ->
+  apid name_id, false, callback
 
 
 module.exports = apid
