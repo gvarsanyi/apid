@@ -26,7 +26,7 @@ apid = (name_id, entry, callback) ->
   if process.platform is 'win32'
     home = process.env.USERPROFILE
   home += '/.config/' + name_id
-  file = home + '/.apid-' + process.getuid()
+  file = home + '/apid-' + process.getuid()
 
 
   mkdirp = require 'mkdirp'
@@ -57,7 +57,6 @@ apid = (name_id, entry, callback) ->
     else
       fs = require 'fs'
       opts = {encoding: 'utf8', flags: 'a'}
-      log_stream = err_stream = null
 
       _std_streams = {}
       for type in ['err', 'out']

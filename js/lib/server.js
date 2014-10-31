@@ -11,7 +11,7 @@ remote_api = require('./remote-api');
 module.exports.start = function(port, callback) {
   var cleaned_up, event, server, _fn, _i, _len, _ref;
   cleaned_up = false;
-  _ref = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK'];
+  _ref = ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK', 'exit', 'uncaughtException'];
   _fn = function(event) {
     return process.on(event, function() {
       var args, fs;

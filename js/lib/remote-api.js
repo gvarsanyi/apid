@@ -8,15 +8,15 @@ callbacks = {};
 
 module.exports.api = api = {};
 
-module.exports.attach = function(keys, socket, target) {
-  var key, _fn, _i, _len;
+module.exports.attach = function(map, socket, target) {
+  var copy_to_api, functionize, key;
   if (target == null) {
     target = api;
   }
-  _fn = function(key) {
-    return target[key] = function() {
-      var args, cb, err, msg, _j;
-      args = 2 <= arguments.length ? __slice.call(arguments, 0, _j = arguments.length - 1) : (_j = 0, []), cb = arguments[_j++];
+  functionize = function(keys) {
+    return function() {
+      var args, cb, err, msg, _i;
+      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), cb = arguments[_i++];
       if (typeof cb !== 'function') {
         throw new Error('Callback function is required as last argument');
       }
@@ -26,7 +26,7 @@ module.exports.attach = function(keys, socket, target) {
         msg = {
           req: {
             id: callback_id,
-            fn: key
+            fn: keys
           }
         };
         if (args.length) {
@@ -43,10 +43,34 @@ module.exports.attach = function(keys, socket, target) {
       }
     };
   };
-  for (_i = 0, _len = keys.length; _i < _len; _i++) {
-    key = keys[_i];
-    _fn(key);
+  copy_to_api = function(src, target, keys) {
+    var item, key, new_keys, node;
+    if (keys == null) {
+      keys = [];
+    }
+    for (key in src) {
+      node = src[key];
+      new_keys = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = keys.length; _i < _len; _i++) {
+          item = keys[_i];
+          _results.push(item);
+        }
+        return _results;
+      })();
+      new_keys.push(key);
+      if (node && typeof node === 'object') {
+        copy_to_api(node, (target[key] = {}), new_keys);
+      } else {
+        target[key] = functionize(new_keys);
+      }
+    }
+  };
+  for (key in api) {
+    delete api[key];
   }
+  copy_to_api(map, target);
 };
 
 module.exports.response = function(res) {

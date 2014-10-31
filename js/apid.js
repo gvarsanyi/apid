@@ -34,10 +34,10 @@ apid = function(name_id, entry, callback) {
     home = process.env.USERPROFILE;
   }
   home += '/.config/' + name_id;
-  file = home + '/.apid-' + process.getuid();
+  file = home + '/apid-' + process.getuid();
   mkdirp = require('mkdirp');
   mkdirp(home, function(err) {
-    var connect, connected, daemon, err_stream, fs, log_stream, opts, server, type, _fn, _i, _len, _ref, _std_streams;
+    var connect, connected, daemon, fs, opts, server, type, _fn, _i, _len, _ref, _std_streams;
     connected = function() {
       var cb;
       apid.ready = ready = true;
@@ -68,7 +68,6 @@ apid = function(name_id, entry, callback) {
         encoding: 'utf8',
         flags: 'a'
       };
-      log_stream = err_stream = null;
       _std_streams = {};
       _ref = ['err', 'out'];
       _fn = function(type) {

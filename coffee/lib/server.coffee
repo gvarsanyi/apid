@@ -7,7 +7,8 @@ remote_api  = require './remote-api'
 module.exports.start = (port, callback) ->
 
   cleaned_up = false
-  for event in ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK']
+  for event in ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK', 'exit',
+                'uncaughtException']
     do (event) ->
       process.on event, (args...) ->
         console.log 'Event:', event, args...
