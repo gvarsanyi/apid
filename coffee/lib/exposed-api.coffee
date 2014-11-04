@@ -1,3 +1,5 @@
+callbax = null
+
 
 module.exports.api = api = {}
 
@@ -7,7 +9,7 @@ api.ping = (cb) ->
 
 
 expose_hash = (src, keys) ->
-  console.log 'src, keys ::', src, keys
+  # console.log 'src, keys ::', src, keys
   for key, ref of src
     new_keys = (item for item in keys)
     new_keys.push key
@@ -55,7 +57,8 @@ module.exports.reveal = (socket) ->
 
 
 module.exports.request = (req, socket, target) ->
-  cb = (args...) ->
+  callbax ?= require 'callbax'
+  cb = callbax (args...) ->
     msg = res: {id: req.id}
     if args.length
       msg.res.args = JSON.stringify args

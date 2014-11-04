@@ -1,3 +1,4 @@
+callbax = null
 
 callback_id = 0
 callbacks   = {}
@@ -7,8 +8,10 @@ module.exports.api = api = {}
 
 
 module.exports.attach = (map, socket, target=api) ->
+  callbax ?= require 'callbax'
+
   functionize = (keys) ->
-    (args..., cb) ->
+    callbax (args..., cb) ->
       unless typeof cb is 'function'
         throw new Error 'Callback function is required as last argument'
 
