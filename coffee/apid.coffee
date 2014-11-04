@@ -84,7 +84,10 @@ apid.expose  = exposed_api.expose
 
 apid.exposed = exposed_api.api
 
+apid.session = exposed_api.session
+
 apid.remote  = remote_api.api
+apid.remoteSession = remote_api.session
 
 apid.ready   = ready
 

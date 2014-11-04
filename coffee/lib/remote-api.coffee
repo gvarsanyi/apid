@@ -4,11 +4,13 @@ callback_id = 0
 callbacks   = {}
 
 
-module.exports.api = api = {}
+module.exports.api     = api     = {}
+module.exports.session = session = {}
 
 
-module.exports.attach = (map, socket, target=api) ->
+module.exports.attach = (data, socket, target=api, target_session=session) ->
   callbax ?= require 'callbax'
+
 
   functionize = (keys) ->
     callbax (args..., cb) ->
@@ -40,12 +42,16 @@ module.exports.attach = (map, socket, target=api) ->
         target[key] = functionize new_keys
     return
 
-  for key of api
-    delete api[key]
+  for key of target
+    delete target[key]
+  copy_to_api data.api, target
 
-  copy_to_api map, target
+  for key of target_session
+    delete target_session[key]
+  for key, value of data.session or {}
+    target_session[key] = value
 
-  # console.log 'api/target', target, map
+  # console.log 'api/target', target, target_session, map
   return
 
 

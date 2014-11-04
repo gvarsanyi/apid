@@ -14,7 +14,7 @@ module.exports.connect = (port, callback) ->
     socket.on 'data', (data) ->
       # console.log 'data', data
       if data.api
-        remote_api.attach data.api, socket
+        remote_api.attach data, socket
         handshake += 1
         if handshake is 2
           callback?()

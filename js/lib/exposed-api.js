@@ -6,6 +6,8 @@ callbax = null;
 
 module.exports.api = api = {};
 
+module.exports.session = {};
+
 api.ping = function(cb) {
   return cb(null, 'pong');
 };
@@ -71,11 +73,12 @@ module.exports.reveal = function(socket) {
   };
   copy_to_map(api, (map = {}));
   return socket.write({
-    api: map
+    api: map,
+    session: module.exports.session
   });
 };
 
-module.exports.request = function(req, socket, target) {
+module.exports.request = function(req, socket, target, target_session) {
   var args, cb, err, fn, item;
   if (callbax == null) {
     callbax = require('callbax');
@@ -95,6 +98,9 @@ module.exports.request = function(req, socket, target) {
   });
   if (target) {
     cb.remote = target;
+  }
+  if (target_session) {
+    cb.session = target_session;
   }
   try {
     if (!((req != null ? req.id : void 0) >= 1)) {

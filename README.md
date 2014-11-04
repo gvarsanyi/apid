@@ -65,6 +65,14 @@ Asynchronous alert:
 - all exposed functions must take a callback function as their last argument
 - all callbacks should be called back with signiture: `callback(err[, arg1[, arg2, ...]]);` where err is an Error type or `null` or `undefined` if there was no error.
 
+## apid.session object (sharing data with remote)
+Add keys and values to apid.session you want to share. Be careful not to add too much, this will be distributed in connection time.
+Note:
+- Server session data is available for clients on apid.remoteSession after connection
+- Caller client session data is available for server API methods on the callback function (as callback.session) much like client API (on callback.remote)
+- Changes after connection will not be exposed.
+- JSON restrictions apply (see "Caveats" below)
+
 ## apid.remote object (container of daemon API for clients)
 
 ## callback.remote object (container of client's expose API for daemon)

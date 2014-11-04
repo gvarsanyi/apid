@@ -14,7 +14,7 @@ module.exports.connect = function(port, callback) {
     exposed_api.reveal(socket);
     return socket.on('data', function(data) {
       if (data.api) {
-        remote_api.attach(data.api, socket);
+        remote_api.attach(data, socket);
         handshake += 1;
         if (handshake === 2) {
           return typeof callback === "function" ? callback() : void 0;

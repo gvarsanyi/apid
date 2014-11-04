@@ -40,17 +40,18 @@ module.exports.start = function(port, callback) {
     return typeof callback === "function" ? callback() : void 0;
   });
   server.on('connection', function(socket) {
-    var client_api;
+    var client_api, client_session;
     client_api = {};
+    client_session = {};
     exposed_api.reveal(socket);
     return socket.on('data', function(data) {
       if (data.api) {
-        remote_api.attach(data.api, socket, client_api);
+        remote_api.attach(data, socket, client_api, client_session);
         return socket.write({
           ack: 1
         });
       } else if (data.req) {
-        return exposed_api.request(data.req, socket, client_api);
+        return exposed_api.request(data.req, socket, client_api, client_session);
       } else {
         return remote_api.response(data != null ? data.res : void 0);
       }

@@ -9,9 +9,12 @@ exposable =
 
 apid.expose exposable
 
+apid.session.serverSessionX = 1
+
+
 apid.expose 'sumWithPing', (a, b, cb) ->
   cb.remote.ping (err, res) ->
-    cb null, a + b
+    cb null, a + b, cb.session
 
 
 apid.server 'exampleapid', (err) ->

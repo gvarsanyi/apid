@@ -29,17 +29,18 @@ module.exports.start = (port, callback) ->
     callback?()
 
   server.on 'connection', (socket) ->
-    client_api = {}
+    client_api     = {}
+    client_session = {}
 
     exposed_api.reveal socket
 
     socket.on 'data', (data) ->
       # console.log 'data', data
       if data.api
-        remote_api.attach data.api, socket, client_api
+        remote_api.attach data, socket, client_api, client_session
         socket.write {ack: 1}
       else if data.req
-        exposed_api.request data.req, socket, client_api
+        exposed_api.request data.req, socket, client_api, client_session
       else
         remote_api.response data?.res
 

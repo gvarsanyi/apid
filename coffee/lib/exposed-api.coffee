@@ -1,7 +1,8 @@
 callbax = null
 
 
-module.exports.api = api = {}
+module.exports.api     = api = {}
+module.exports.session = {}
 
 # ping function is always exposed
 api.ping = (cb) ->
@@ -53,10 +54,10 @@ module.exports.reveal = (socket) ->
 
   copy_to_map api, (map = {})
 
-  socket.write api: map
+  socket.write {api: map, session: module.exports.session}
 
 
-module.exports.request = (req, socket, target) ->
+module.exports.request = (req, socket, target, target_session) ->
   callbax ?= require 'callbax'
   cb = callbax (args...) ->
     msg = res: {id: req.id}
@@ -65,6 +66,8 @@ module.exports.request = (req, socket, target) ->
     socket.write msg
   if target
     cb.remote = target
+  if target_session
+    cb.session = target_session
 
   try
     unless req?.id >= 1

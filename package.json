@@ -1,6 +1,6 @@
 {
   "name": "apid",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Connect to (and, if needed, fire up) a daemon with exposed asynchronous API and share or cache data across clients.",
   "main": "js/apid.js",
   "dependencies": {
