@@ -45,6 +45,7 @@ module.exports.start = function(port, callback) {
     client_session = {};
     exposed_api.reveal(socket);
     return socket.on('data', function(data) {
+      console.log('data', data);
       if (data.api) {
         remote_api.attach(data, socket, client_api, client_session);
         return socket.write({

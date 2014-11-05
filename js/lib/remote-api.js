@@ -92,13 +92,19 @@ module.exports.attach = function(data, socket, target, target_session) {
 };
 
 module.exports.response = function(res) {
-  var cb, _ref;
+  var args, cb, i, _i, _len, _ref, _ref1;
   if (!((res != null ? res.id : void 0) >= 1 && (cb = callbacks[res.id]))) {
     console.error('dropping unparsible response:', res);
   }
   delete callbacks[res.id];
   if ((_ref = res.args) != null ? _ref.length : void 0) {
-    return cb.apply(null, JSON.parse(res.args));
+    args = JSON.parse(res.args);
+    _ref1 = res.errType || [];
+    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+      i = _ref1[_i];
+      args[i] = new Error(args[i]);
+    }
+    return cb.apply(null, args);
   } else {
     return cb();
   }

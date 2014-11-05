@@ -5,10 +5,19 @@ exposable =
     dupe: (n, cb) ->
       cb null, n * 2
   sum: (a, b, cb) ->
-    console.log 'cb.log', cb.log
-    cb.log 'this is a server-triggered log'
-    cb.errorLog 'this is a server-triggered error log'
-    cb null, a + b
+    try # should not fail w/o a callback
+      cb.log 'this is a server-triggered log'
+    catch err
+      return cb err
+    cb.errorLog 'this is a server-triggered error log', -> # has callback
+      cb null, a + b
+  errTest1: (cb) ->
+    throw new Error 'string of errTest1!'
+  errTest2: (cb) ->
+    cb new Error 'string of errTest2!'
+  errTestString: (cb) ->
+    cb 'string of errTestString!'
+
 
 apid.expose exposable
 

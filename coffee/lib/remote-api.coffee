@@ -62,6 +62,10 @@ module.exports.response = (res) ->
   delete callbacks[res.id]
 
   if res.args?.length
-    cb JSON.parse(res.args)...
+    args = JSON.parse res.args
+    for i in res.errType or []
+      args[i] = new Error args[i]
+
+    cb args...
   else
     cb()

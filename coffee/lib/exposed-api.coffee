@@ -1,12 +1,22 @@
 callbax = null
 
 
-module.exports.api     = api = {}
-module.exports.session = {}
-
 # ping function is always exposed
-api.ping = (cb) ->
-  cb null, 'pong'
+api =
+  console:
+    log: (args..., cb) ->
+      console.log args...
+      cb()
+    error: (args..., cb) ->
+      console.error args...
+      cb()
+
+  ping: (cb) ->
+    cb null, 'pong'
+
+
+module.exports.api     = api
+module.exports.session = {}
 
 
 expose_hash = (src, keys) ->
@@ -62,6 +72,9 @@ module.exports.request = (req, socket, target, target_session) ->
   cb = callbax (args...) ->
     msg = res: {id: req.id}
     if args.length
+      for arg, i in args when arg instanceof Error
+        (msg.res.errType ?= []).push i
+        args[i] = arg.message
       msg.res.args = JSON.stringify args
     socket.write msg
 
@@ -69,13 +82,19 @@ module.exports.request = (req, socket, target, target_session) ->
     cb.remote  = target
     cb.session = target_session
 
-    cb.log = (args...) ->
-      if args.length
-        socket.write log: JSON.stringify args
+    check_log = (args, callback) ->
+      if typeof callback isnt 'function' and callback?
+        args.push callback
+        callback = ->
+      if args.length then callback else null
 
-    cb.errorLog = (args...) ->
-      if args.length
-        socket.write errorLog: JSON.stringify args
+    cb.log = (args..., callback) ->
+      if callback = check_log args, callback
+        cb.remote.console.log args..., callback
+
+    cb.errorLog = (args..., callback) ->
+      if callback = check_log args, callback
+        cb.remote.console.error args..., callback
 
   try
     unless req?.id >= 1

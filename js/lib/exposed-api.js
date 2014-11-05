@@ -4,13 +4,29 @@ var api, callbax, expose, expose_hash,
 
 callbax = null;
 
-module.exports.api = api = {};
+api = {
+  console: {
+    log: function() {
+      var args, cb, _i;
+      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), cb = arguments[_i++];
+      console.log.apply(console, args);
+      return cb();
+    },
+    error: function() {
+      var args, cb, _i;
+      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), cb = arguments[_i++];
+      console.error.apply(console, args);
+      return cb();
+    }
+  },
+  ping: function(cb) {
+    return cb(null, 'pong');
+  }
+};
+
+module.exports.api = api;
 
 module.exports.session = {};
-
-api.ping = function(cb) {
-  return cb(null, 'pong');
-};
 
 expose_hash = function(src, keys) {
   var item, key, new_keys, ref;
@@ -79,12 +95,12 @@ module.exports.reveal = function(socket) {
 };
 
 module.exports.request = function(req, socket, target, target_session) {
-  var args, cb, err, fn, item;
+  var args, cb, check_log, err, fn, item;
   if (callbax == null) {
     callbax = require('callbax');
   }
   cb = callbax(function() {
-    var args, msg;
+    var arg, args, i, msg, _base, _i, _len;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     msg = {
       res: {
@@ -92,6 +108,14 @@ module.exports.request = function(req, socket, target, target_session) {
       }
     };
     if (args.length) {
+      for (i = _i = 0, _len = args.length; _i < _len; i = ++_i) {
+        arg = args[i];
+        if (!(arg instanceof Error)) {
+          continue;
+        }
+        ((_base = msg.res).errType != null ? _base.errType : _base.errType = []).push(i);
+        args[i] = arg.message;
+      }
       msg.res.args = JSON.stringify(args);
     }
     return socket.write(msg);
@@ -99,22 +123,29 @@ module.exports.request = function(req, socket, target, target_session) {
   if (target) {
     cb.remote = target;
     cb.session = target_session;
-    cb.log = function() {
-      var args;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    check_log = function(args, callback) {
+      if (typeof callback !== 'function' && (callback != null)) {
+        args.push(callback);
+        callback = function() {};
+      }
       if (args.length) {
-        return socket.write({
-          log: JSON.stringify(args)
-        });
+        return callback;
+      } else {
+        return null;
+      }
+    };
+    cb.log = function() {
+      var args, callback, _i, _ref;
+      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
+      if (callback = check_log(args, callback)) {
+        return (_ref = cb.remote.console).log.apply(_ref, __slice.call(args).concat([callback]));
       }
     };
     cb.errorLog = function() {
-      var args;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      if (args.length) {
-        return socket.write({
-          errorLog: JSON.stringify(args)
-        });
+      var args, callback, _i, _ref;
+      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
+      if (callback = check_log(args, callback)) {
+        return (_ref = cb.remote.console).error.apply(_ref, __slice.call(args).concat([callback]));
       }
     };
   }
