@@ -13,7 +13,6 @@ module.exports.connect = function(port, callback) {
   return socket = jot.connect(port, function() {
     exposed_api.reveal(socket);
     return socket.on('data', function(data) {
-      console.log('data', data);
       if (data.api) {
         remote_api.attach(data, socket);
         handshake += 1;
