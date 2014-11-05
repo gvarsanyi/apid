@@ -79,6 +79,10 @@ Note:
 You may call methods on your caller client from the daemon using .remote exposed on the callback function.
 See example daemon-entry.js above.
 
+## callback.log(args...) and callback.errorLog(args...) functions
+These methods will trigger client's console.log() and console.error() respectively.
+Note: there is no callback argument. Order of execution is not guaranteed, but generally in-order.
+
 # Manual interaction with the daemon via the client (on terminal)
 ## Start
     node my-client.js --daemon-start

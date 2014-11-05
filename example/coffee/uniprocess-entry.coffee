@@ -5,6 +5,9 @@ exposable =
     dupe: (n, cb) ->
       cb null, n * 2
   sum: (a, b, cb) ->
+    console.log 'cb.log', cb.log
+    cb.log 'this is a server-triggered log'
+    cb.errorLog 'this is a server-triggered error log'
     cb null, a + b
 
 apid.expose exposable

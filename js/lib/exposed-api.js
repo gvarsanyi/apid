@@ -98,9 +98,25 @@ module.exports.request = function(req, socket, target, target_session) {
   });
   if (target) {
     cb.remote = target;
-  }
-  if (target_session) {
     cb.session = target_session;
+    cb.log = function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      if (args.length) {
+        return socket.write({
+          log: JSON.stringify(args)
+        });
+      }
+    };
+    cb.errorLog = function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      if (args.length) {
+        return socket.write({
+          errorLog: JSON.stringify(args)
+        });
+      }
+    };
   }
   try {
     if (!((req != null ? req.id : void 0) >= 1)) {

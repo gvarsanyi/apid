@@ -64,10 +64,18 @@ module.exports.request = (req, socket, target, target_session) ->
     if args.length
       msg.res.args = JSON.stringify args
     socket.write msg
-  if target
-    cb.remote = target
-  if target_session
+
+  if target # server mode
+    cb.remote  = target
     cb.session = target_session
+
+    cb.log = (args...) ->
+      if args.length
+        socket.write log: JSON.stringify args
+
+    cb.errorLog = (args...) ->
+      if args.length
+        socket.write errorLog: JSON.stringify args
 
   try
     unless req?.id >= 1

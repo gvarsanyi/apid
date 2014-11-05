@@ -13,7 +13,11 @@ module.exports.connect = (port, callback) ->
 
     socket.on 'data', (data) ->
       # console.log 'data', data
-      if data.api
+      if data.log
+        console.log JSON.parse(data.log)...
+      else if data.errorLog
+        console.error JSON.parse(data.errorLog)...
+      else if data.api
         remote_api.attach data, socket
         handshake += 1
         if handshake is 2
