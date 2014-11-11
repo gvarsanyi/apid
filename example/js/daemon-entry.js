@@ -1,4 +1,5 @@
-var apid = require('../../js/apid');
+var apid   = require('../../js/apid'),
+    server = apid.server;
 
 // example API
 var math = {
@@ -10,9 +11,9 @@ var math = {
 }
 
 // expose API before starting the service
-apid.expose({math: math});
+server.expose({math: math});
 
-apid.server('my-daemon-name-id', function (err) {
+server.start('my-daemon-name-id', function (err) {
   // ready and listening. Outputs are redirected to files in:
   // ~/.config/my-daemon-name-id/apid-$UID.[err|out]
   console.log('started');

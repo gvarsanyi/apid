@@ -1,48 +1,80 @@
+fs  = require 'fs'
 jot = require 'json-over-tcp'
 
-exposed_api = require './exposed-api'
-remote_api  = require './remote-api'
+Bridge = require './bridge'
 
 
-module.exports.start = (port, callback) ->
-
-  cleaned_up = false
-  for event in ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK', 'exit',
-                'uncaughtException']
-    do (event) ->
-      process.on event, (args...) ->
-        console.log 'Event:', event, args...
-        unless cleaned_up or port > 1
-          console.log 'unlinking', port
-          try
-            fs = require 'fs'
-            fs.unlink port
-            cleaned_up = true
-        unless event is 'exit'
-          process.exit 0
+class Server extends Bridge
+  jotServer: null # jotServer
 
 
-  server = jot.createServer port
+  constructor: ->
+    super
 
-  server.on 'listening', ->
-    console.log 'server listening on:', port
-    callback?()
+  divertExit: =>
+    cleaned_up = false
+    for event in ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK', 'exit',
+                  'uncaughtException']
+      do (event) =>
+        process.on event, (args...) =>
+          console.log 'Event:', event, args...
+          unless cleaned_up and @socketFile
+            console.log 'unlinking', @socketFile
+            try
+              fs.unlink @socketFile
+              cleaned_up = true
+          unless event is 'exit'
+            process.exit 0
+    return
 
-  server.on 'connection', (socket) ->
-    client_api     = {}
-    client_session = {}
+  divertStdOutput: (cb) =>
+    mkdirp = require 'mkdirp'
+    mkdirp @configPath, (err) =>
+      file = @configPath + '/apid-' + process.getuid() + '.'
+      opts = {encoding: 'utf8', flags: 'a'}
+      std_streams = {}
+      for type in ['err', 'out']
+        do (type) ->
+          process['std' + type].write = (d) ->
+            unless std_streams[type]
+              std_streams[type] = fs.createWriteStream file + type, opts
+              std_streams[type].once 'close', ->
+                std_streams[type] = null
+              std_streams[type].once 'error', ->
+                std_streams[type] = null
 
-    exposed_api.reveal socket
+            std_streams[type].write d
+      cb()
 
-    socket.on 'data', (data) ->
-      # console.log 'data', data
-      if data.api
-        remote_api.attach data, socket, client_api, client_session
-        socket.write {ack: 1}
-      else if data.req
-        exposed_api.request data.req, socket, client_api, client_session
-      else
-        remote_api.response data?.res
+  start: (name, options, cb) =>
+    unless typeof options is 'object'
+      [cb, options] = [options, {}]
+    @setConfig name, options
+#     process.title = @name
+
+    @divertExit()
+    @divertStdOutput =>
+
+      @jotServer = jot.createServer @socketFile
+
+      @jotServer.on 'listening', =>
+        console.log 'server listening on:', @socketFile
+        @readyFlush cb
+
+      @jotServer.on 'connection', (@socket) =>
+        @revealExposed()
+
+        socket.on 'data', (data) =>
+          # console.log 'data', data
+          if data.api
+            @attachRemote data
+            socket.write ack: 1
+          else if data.req
+            @request data.req
+          else
+            @response data?.res
+
+      @jotServer.listen @socketFile
 
 
-  server.listen port
+module.exports = Server

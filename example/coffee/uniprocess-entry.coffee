@@ -1,4 +1,8 @@
-apid = require '../../js/apid'
+apid = require '../../coffee/apid'
+
+
+server = apid.server
+
 
 exposable =
   math:
@@ -19,15 +23,15 @@ exposable =
     cb 'string of errTestString!'
 
 
-apid.expose exposable
+server.expose exposable
 
-apid.session.serverSessionX = 1
+server.session.serverSessionX = 1
 
 
-apid.expose 'sumWithPing', (a, b, cb) ->
+server.expose 'sumWithPing', (a, b, cb) ->
   cb.remote.ping (err, res) ->
     cb null, a + b, cb.session
 
 
-apid.server 'exampleapid', (err) ->
-  console.log 'server ready', err, apid.exposed
+server.start 'exampleapid', (err) ->
+  console.log 'server ready', err, server.exposed

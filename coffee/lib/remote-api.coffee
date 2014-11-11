@@ -1,71 +1,81 @@
-callbax = null
+callbax = require 'callbax'
 
-callback_id = 0
-callbacks   = {}
-
-
-module.exports.api     = api     = {}
-module.exports.session = session = {}
+ReadyCue = require './ready-cue'
 
 
-module.exports.attach = (data, socket, target=api, target_session=session) ->
-  callbax ?= require 'callbax'
+class RemoteApi extends ReadyCue
+  remote:        null # {}
+  remoteCallId:  0
+  remoteCalls:   null # {}
+  remoteSession: null # {}
 
 
-  functionize = (keys) ->
-    callbax (args..., cb) ->
-      unless typeof cb is 'function'
-        throw new Error 'Callback function is required as last argument'
+  constructor: ->
+    super
+    @remote        = {}
+    @remoteCalls   = {}
+    @remoteSession = {}
 
-      callback_id += 1
-      callbacks[callback_id] = cb
+  attachRemote: (data) =>
+    target         = @remote
+    target_session = @remoteSession
 
-      try
-        msg = req: {id: callback_id, fn: keys}
-        if args.length
-          msg.req.args = JSON.stringify args
-        socket.write msg
+    functionize = (keys) =>
+      callbax (args..., cb) =>
+        unless typeof cb is 'function'
+          throw new Error 'Callback function is required as last argument'
 
-      catch err
-        console.error 'error requesting:', err
-        if cb = callbacks[callback_id]
-          delete callbacks[callback_id]
-          cb err
+        callback_id = (@remoteCallId += 1)
+        (callbacks = @remoteCalls)[callback_id] = cb
 
-  copy_to_api = (src, target, keys=[]) ->
-    for key, node of src
-      new_keys = (item for item in keys)
-      new_keys.push key
-      if node and typeof node is 'object'
-        copy_to_api node, (target[key] = {}), new_keys
-      else
-        target[key] = functionize new_keys
+        try
+          msg = req: {id: callback_id, fn: keys}
+          if args.length
+            msg.req.args = JSON.stringify args
+          @socket.write msg
+        catch err
+          console.error 'error requesting:', err
+          if cb = callbacks[callback_id]
+            delete callbacks[callback_id]
+            cb err
+
+    copy_to_api = (src, target, keys=[]) ->
+      for key, node of src
+        new_keys = (item for item in keys)
+        new_keys.push key
+        if node and typeof node is 'object'
+          copy_to_api node, (target[key] = {}), new_keys
+        else
+          target[key] = functionize new_keys
+      return
+
+    for key of target
+      delete target[key]
+    copy_to_api data.api, target
+
+    for key of target_session
+      delete target_session[key]
+    for key, value of data.session or {}
+      target_session[key] = value
+
+    # console.log 'api/target', target, target_session, map
     return
 
-  for key of target
-    delete target[key]
-  copy_to_api data.api, target
+  response: (res) =>
+    callbacks = @remoteCalls
+    unless res?.id >= 1 and cb = callbacks[res.id]
+      console.error 'dropping unparsible response:', res
 
-  for key of target_session
-    delete target_session[key]
-  for key, value of data.session or {}
-    target_session[key] = value
+    delete callbacks[res.id]
 
-  # console.log 'api/target', target, target_session, map
-  return
+    if res.args?.length
+      args = JSON.parse res.args
+      for i in res.errType or []
+        args[i] = new Error args[i]
+
+      cb args...
+    else
+      cb()
 
 
-module.exports.response = (res) ->
-  unless res?.id >= 1 and cb = callbacks[res.id]
-    console.error 'dropping unparsible response:', res
-
-  delete callbacks[res.id]
-
-  if res.args?.length
-    args = JSON.parse res.args
-    for i in res.errType or []
-      args[i] = new Error args[i]
-
-    cb args...
-  else
-    cb()
+module.exports = RemoteApi

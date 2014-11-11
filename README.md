@@ -14,7 +14,8 @@ APID fits your needs if you want to split your node.js code to
 ## Install `apid`
     npm isntall apid --save
 ## Create your daemon: daemon-entry.js
-    var apid = require('apid');
+    var apid   = require('apid'), // apid library
+        server = apid.server;     // apid.server instance
 
     // example API
     var math = {
@@ -26,26 +27,28 @@ APID fits your needs if you want to split your node.js code to
     }
 
     // expose API before starting the service
-    apid.expose({math: math});
+    server.expose({math: math});
 
-    apid.server('my-daemon-name-id', function (err) {
+    // starting server 'my-daemon-name-id'
+    server.start('my-daemon-name-id', function (err) {
       // ready and listening. Outputs are redirected to files in:
       // ~/.config/my-daemon-name-id/apid-$UID.[err|out]
       console.log('started');
     });
 
 ## Create your client: app.js
-    var apid = require('apid');
+    var apid   = require('apid'), // apid library
+        client = apid.client('my-daemon-name-id'); // apid client instance
 
     // expose API on the client. This can be called from the daemon.
-    apid.expose('version', function (callback) {
+    client.expose('version', function (callback) {
       callback(null, '1.0.0');
     });
 
     // connect (and fire up daemon if not running yet)
-    apid('my-daemon-name-id', __dirname + '/daemon-entry.js', function (err) {
-      // ready and connected to apid. Call a remote method:
-      apid.remote.math.sum(1, 3, function (err, sum, caller_version) {
+    client.connect(__dirname + '/daemon-entry.js', function (err) {
+      // ready and connected to apid server. Call a remote method:
+      client.remote.math.sum(1, 3, function (err, sum, caller_version) {
         console.log('This should be 4:', sum);
         console.log('Caller version returned:', caller_version);
       });
@@ -53,30 +56,36 @@ APID fits your needs if you want to split your node.js code to
 
 
 # API of APID
-## apid(daemon_name_id, daemon_entry_absolute_path, ready_callback_function)
-Connects to APID as a client, fires up the daemon if not running yet
+## client = apid.client(daemon_name)
+Returns newly created or existing named client
 
-## apid.server(daemon_name_id, ready_callback_function)
+## client.connect(daemon_entry_absolute_path[, options][, ready_callback_function])
+Connects to APID daemon as a client, fires up the daemon if not running yet
+
+## apid.server
+Server instance. Utilize it for creating daemons.
+
+## apid.server.start(daemon_name[, options][, ready_callback_function])
 Fires up daemon
 
-## apid.expose(key[, subkey[, subsubkey, ...]], function_reference) or apid.expose({key: {subkey: function_reference}})
+## .expose(key[, subkey[, subsubkey, ...]], function_reference) or apid.expose({key: {subkey: function_reference}})
 Exposes a function (or functions on an object) to make them available for connecting peers on the .remote object
 Asynchronous alert:
 - all exposed functions must take a callback function as their last argument
 - all callbacks should be called back with signiture: `callback(err[, arg1[, arg2, ...]]);` where err is an Error type or `null` or `undefined` if there was no error.
+Note: available on both client and apid.server instances.
 
-## apid.session object (sharing data with remote)
+## .session object (sharing data with remote)
 Add keys and values to apid.session you want to share. Be careful not to add too much, this will be distributed in connection time.
 Note:
 - Server session data is available for clients on apid.remoteSession after connection
 - Caller client session data is available for server API methods on the callback function (as callback.session) much like client API (on callback.remote)
 - Changes after connection will not be exposed.
 - JSON restrictions apply (see "Caveats" below)
+- Available on both client and apid.server instances.
 
-## apid.remote object (container of daemon API for clients)
-
-## callback.remote object (container of client's expose API for daemon)
-You may call methods on your caller client from the daemon using .remote exposed on the callback function.
+## client.remote and callback.remote objects
+Container of exposed API on remote peer.
 See example daemon-entry.js above.
 
 ## callback.log(args...[, callback]) and callback.errorLog(args...[, callback]) functions
