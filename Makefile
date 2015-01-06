@@ -1,7 +1,7 @@
 
 compile: npm
 	rm js/ -rf
-	coffee -b -c -o js/ coffee/
+	coffee --bare --compile --no-header --output js/ coffee/
 
 npm:
 	npm install

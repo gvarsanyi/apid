@@ -30,6 +30,8 @@ class Server extends Bridge
   divertStdOutput: (cb) =>
     mkdirp = require 'mkdirp'
     mkdirp @configPath, (err) =>
+      return cb(err) if err
+
       file = @configPath + '/apid-' + process.getuid() + '.'
       opts = {encoding: 'utf8', flags: 'a'}
       std_streams = {}

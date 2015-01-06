@@ -18,43 +18,47 @@ class Client extends Bridge
       [cb, options] = [options, {}]
     @setOptions options
 
-    daemon = require('daemonize2').setup
-      main:    @requirePath
-      name:    @name
-      pidfile: @pidFile
-      silent:  true
+    mkdirp = require 'mkdirp'
+    mkdirp @configPath, (err) =>
+      return cb(err) if err
 
-    if require('./daemon-control') daemon, @name
-      return # daemon control was called
+      daemon = require('daemonize2').setup
+        main:    @requirePath
+        name:    @name
+        pidfile: @pidFile
+        silent:  true
 
-    connect = =>
-      handshake = 0
+      if require('./daemon-control') daemon, @name
+        return # daemon control was called
 
-      @socket = jot.connect @socketFile, =>
-        @revealExposed()
+      connect = =>
+        handshake = 0
 
-        @socket.on 'data', (data) =>
-          # console.log 'data', data
-          if data.api
-            @attachRemote data
-            handshake += 1
-            if handshake is 2
-              @readyFlush cb
-          else if data.ack
-            handshake += 1
-            if handshake is 2
-              @readyFlush cb
-          else if data.req
-            @request data.req
-          else
-            @response data?.res
+        @socket = jot.connect @socketFile, =>
+          @revealExposed()
 
-    daemon
-    .on('started', connect)
-    .on('running', connect)
-    .on('error', (err) -> throw err)
+          @socket.on 'data', (data) =>
+            # console.log 'data', data
+            if data.api
+              @attachRemote data
+              handshake += 1
+              if handshake is 2
+                @readyFlush cb
+            else if data.ack
+              handshake += 1
+              if handshake is 2
+                @readyFlush cb
+            else if data.req
+              @request data.req
+            else
+              @response data?.res
 
-    daemon.start()
+      daemon
+      .on('started', connect)
+      .on('running', connect)
+      .on('error', (err) -> throw err)
+
+      daemon.start()
 
 
 
