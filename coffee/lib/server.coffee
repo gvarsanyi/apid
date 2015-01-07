@@ -7,7 +7,6 @@ Bridge = require './bridge'
 class Server extends Bridge
   jotServer: null # jotServer
 
-
   start: (name, options, cb) =>
     unless typeof options is 'object'
       [cb, options] = [options, {}]
@@ -74,16 +73,17 @@ do ->
           std_streams[type].write d
 
     # divert exit processes
-    cleaned_up = false
+    cleaned_up  = false
+    socket_file = config_path + '/apid-' + process.getuid() + '.socket'
     for event in ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK', 'exit',
                   'uncaughtException']
-      do (event) =>
+      do (event) ->
         process.on event, (args...) =>
           console.log 'Event:', event, args...
-          unless cleaned_up and @socketFile
-            console.log 'unlinking', @socketFile
+          unless cleaned_up and socket_file
+            console.log 'unlinking', socket_file
             try
-              fs.unlink @socketFile
+              fs.unlink socket_file
               cleaned_up = true
           unless event is 'exit'
             process.exit 0

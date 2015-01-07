@@ -61,7 +61,7 @@ Server = (function(_super) {
 module.exports = Server;
 
 (function() {
-  var cleaned_up, config_path, event, file, fn, home, name, opts, std_streams, type, _fn, _fn1, _i, _j, _len, _len1, _ref, _ref1;
+  var cleaned_up, config_path, event, file, fn, home, name, opts, socket_file, std_streams, type, _fn, _fn1, _i, _j, _len, _len1, _ref, _ref1;
   fn = process.mainModule.filename;
   if (fn.indexOf('node_modules/daemonize2/lib/wrapper.js') === fn.length - 38) {
     name = process.title;
@@ -100,26 +100,27 @@ module.exports = Server;
       _fn(type);
     }
     cleaned_up = false;
+    socket_file = config_path + '/apid-' + process.getuid() + '.socket';
     _ref1 = ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK', 'exit', 'uncaughtException'];
-    _fn1 = (function(_this) {
-      return function(event) {
-        return process.on(event, function() {
+    _fn1 = function(event) {
+      return process.on(event, (function(_this) {
+        return function() {
           var args;
           args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
           console.log.apply(console, ['Event:', event].concat(__slice.call(args)));
-          if (!(cleaned_up && _this.socketFile)) {
-            console.log('unlinking', _this.socketFile);
+          if (!(cleaned_up && socket_file)) {
+            console.log('unlinking', socket_file);
             try {
-              fs.unlink(_this.socketFile);
+              fs.unlink(socket_file);
               cleaned_up = true;
             } catch (_error) {}
           }
           if (event !== 'exit') {
             return process.exit(0);
           }
-        });
-      };
-    })(this);
+        };
+      })(this));
+    };
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       event = _ref1[_j];
       _fn1(event);
