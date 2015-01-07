@@ -22,11 +22,16 @@ class Client extends Bridge
     mkdirp @configPath, (err) =>
       return cb(err) if err
 
-      daemon = require('daemonize2').setup
+      setup =
         main:    @requirePath
         name:    @name
         pidfile: @pidFile
         silent:  true
+
+      if options.coffeePath
+        setup.coffeePath = options.coffeePath
+
+      daemon = require('daemonize2').setup setup
 
       if require('./daemon-control') daemon, @name
         return # daemon control was called

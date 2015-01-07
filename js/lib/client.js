@@ -28,16 +28,20 @@ Client = (function(_super) {
     mkdirp = require('mkdirp');
     return mkdirp(this.configPath, (function(_this) {
       return function(err) {
-        var connect, daemon;
+        var connect, daemon, setup;
         if (err) {
           return cb(err);
         }
-        daemon = require('daemonize2').setup({
+        setup = {
           main: _this.requirePath,
           name: _this.name,
           pidfile: _this.pidFile,
           silent: true
-        });
+        };
+        if (options.coffeePath) {
+          setup.coffeePath = options.coffeePath;
+        }
+        daemon = require('daemonize2').setup(setup);
         if (require('./daemon-control')(daemon, _this.name)) {
           return;
         }
