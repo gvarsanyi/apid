@@ -33,6 +33,7 @@ Client = (function(_super) {
           return cb(err);
         }
         setup = {
+          cwd: options.cwd || process.cwd(),
           main: _this.requirePath,
           name: _this.name,
           pidfile: _this.pidFile,

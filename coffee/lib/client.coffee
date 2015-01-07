@@ -23,6 +23,7 @@ class Client extends Bridge
       return cb(err) if err
 
       setup =
+        cwd:     options.cwd or process.cwd()
         main:    @requirePath
         name:    @name
         pidfile: @pidFile
