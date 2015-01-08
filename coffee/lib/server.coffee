@@ -4,6 +4,9 @@ jot = require 'json-over-tcp'
 Bridge = require './bridge'
 
 
+exposed_socket = null
+
+
 class Server extends Bridge
   jotServer: null # jotServer
 
@@ -20,6 +23,8 @@ class Server extends Bridge
 
     @jotServer.on 'connection', (@socket) =>
       @revealExposed()
+
+      exposed_socket = socket
 
       socket.on 'data', (data) =>
         # console.log 'data', data
@@ -59,18 +64,22 @@ do ->
     # divert stdout/stderr
     file = config_path + '/apid-' + process.getuid() + '.'
     opts = {encoding: 'utf8', flags: 'a'}
-    std_streams = {}
+    fd = {}
     for type in ['err', 'out']
       do (type) ->
         process['std' + type].write = (d) ->
-          unless std_streams[type]
-            std_streams[type] = fs.createWriteStream file + type, opts
-            std_streams[type].once 'close', ->
-              std_streams[type] = null
-            std_streams[type].once 'error', ->
-              std_streams[type] = null
-
-          std_streams[type].write d
+          if exposed_socket
+            (inf = {})[type] = d
+            try
+              exposed_socket.write std: inf
+          try
+            fd[type] ?= fs.openSync file + type, 'a'
+          try
+            fs.writeSync fd[type], d
+          catch # see if the file can be re-opened
+            fd[type] = fs.openSync file + type, 'a'
+            try
+              fs.writeSync fd[type], d
 
     # divert exit processes
     cleaned_up  = false
@@ -79,12 +88,18 @@ do ->
                   'uncaughtException']
       do (event) ->
         process.on event, (args...) =>
-          console.log 'Event:', event, args...
           unless cleaned_up and socket_file
             console.log 'unlinking', socket_file
             try
               fs.unlink socket_file
+              for type in ['err', 'out'] when fd[type]
+                fs.closeSync fd[type]
+                delete fd[type]
               cleaned_up = true
+
+          type = if event is 'uncaughtException' then 'error' else 'log'
+          console[type] 'Event:', event, args...
+
           unless event is 'exit'
             process.exit 0
 

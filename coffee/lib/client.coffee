@@ -3,6 +3,14 @@ jot = require 'json-over-tcp'
 Bridge = require './bridge'
 
 
+daemon_std = {}
+for arg in process.argv[2 ...]
+  if arg is '--daemon-stderr'
+    daemon_std.err = true
+  if arg is '--daemon-stdout'
+    daemon_std.out = true
+
+
 class Client extends Bridge
   requirePath: null # string
 
@@ -45,7 +53,10 @@ class Client extends Bridge
 
           @socket.on 'data', (data) =>
             # console.log 'data', data
-            if data.api
+            if data.std
+              for type, d of data.std when daemon_std[type] and data.std[type]?
+                process.stderr.write '[APID STD' + type.toUpperCase() + '] ' + d
+            else if data.api
               @attachRemote data
               handshake += 1
               if handshake is 2
@@ -65,7 +76,6 @@ class Client extends Bridge
       .on('error', (err) -> throw err)
 
       daemon.start()
-
 
 
 module.exports = Client

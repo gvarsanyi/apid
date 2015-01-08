@@ -105,6 +105,8 @@ Note: the callback argument is optional. If not used, order of execution can not
     node my-client.js --daemon-reload
 ## Status
     node my-client.js --daemon-status
+## Pick up STDOUT and/or STDERR of daemon
+    node my-client.js --daemon-stdout --daemon-stderr
 
 
 # Caveats

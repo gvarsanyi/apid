@@ -1,4 +1,4 @@
-var Bridge, Client, jot,
+var Bridge, Client, arg, daemon_std, jot, _i, _len, _ref,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -6,6 +6,19 @@ var Bridge, Client, jot,
 jot = require('json-over-tcp');
 
 Bridge = require('./bridge');
+
+daemon_std = {};
+
+_ref = process.argv.slice(2);
+for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+  arg = _ref[_i];
+  if (arg === '--daemon-stderr') {
+    daemon_std.err = true;
+  }
+  if (arg === '--daemon-stdout') {
+    daemon_std.out = true;
+  }
+}
 
 Client = (function(_super) {
   __extends(Client, _super);
@@ -19,10 +32,10 @@ Client = (function(_super) {
   }
 
   Client.prototype.connect = function(require_path, options, cb) {
-    var mkdirp, _ref;
+    var mkdirp, _ref1;
     this.requirePath = require.resolve(require_path);
     if (typeof options !== 'object') {
-      _ref = [options, {}], cb = _ref[0], options = _ref[1];
+      _ref1 = [options, {}], cb = _ref1[0], options = _ref1[1];
     }
     this.setOptions(options);
     mkdirp = require('mkdirp');
@@ -52,7 +65,18 @@ Client = (function(_super) {
           return _this.socket = jot.connect(_this.socketFile, function() {
             _this.revealExposed();
             return _this.socket.on('data', function(data) {
-              if (data.api) {
+              var d, type, _ref2, _results;
+              if (data.std) {
+                _ref2 = data.std;
+                _results = [];
+                for (type in _ref2) {
+                  d = _ref2[type];
+                  if (daemon_std[type] && (data.std[type] != null)) {
+                    _results.push(process.stderr.write('[APID STD' + type.toUpperCase() + '] ' + d));
+                  }
+                }
+                return _results;
+              } else if (data.api) {
                 _this.attachRemote(data);
                 handshake += 1;
                 if (handshake === 2) {

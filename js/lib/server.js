@@ -1,4 +1,4 @@
-var Bridge, Server, fs, jot,
+var Bridge, Server, exposed_socket, fs, jot,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -9,6 +9,8 @@ fs = require('fs');
 jot = require('json-over-tcp');
 
 Bridge = require('./bridge');
+
+exposed_socket = null;
 
 Server = (function(_super) {
   __extends(Server, _super);
@@ -37,6 +39,7 @@ Server = (function(_super) {
       return function(socket) {
         _this.socket = socket;
         _this.revealExposed();
+        exposed_socket = socket;
         return socket.on('data', function(data) {
           if (data.api) {
             _this.attachRemote(data);
@@ -61,7 +64,7 @@ Server = (function(_super) {
 module.exports = Server;
 
 (function() {
-  var cleaned_up, config_path, event, file, fn, home, name, opts, socket_file, std_streams, type, _fn, _fn1, _i, _j, _len, _len1, _ref, _ref1;
+  var cleaned_up, config_path, event, fd, file, fn, home, name, opts, socket_file, type, _fn, _fn1, _i, _j, _len, _len1, _ref, _ref1;
   fn = process.mainModule.filename;
   if (fn.indexOf('node_modules/daemonize2/lib/wrapper.js') === fn.length - 38) {
     name = process.title;
@@ -79,20 +82,32 @@ module.exports = Server;
       encoding: 'utf8',
       flags: 'a'
     };
-    std_streams = {};
+    fd = {};
     _ref = ['err', 'out'];
     _fn = function(type) {
       return process['std' + type].write = function(d) {
-        if (!std_streams[type]) {
-          std_streams[type] = fs.createWriteStream(file + type, opts);
-          std_streams[type].once('close', function() {
-            return std_streams[type] = null;
-          });
-          std_streams[type].once('error', function() {
-            return std_streams[type] = null;
-          });
+        var inf;
+        if (exposed_socket) {
+          (inf = {})[type] = d;
+          try {
+            exposed_socket.write({
+              std: inf
+            });
+          } catch (_error) {}
         }
-        return std_streams[type].write(d);
+        try {
+          if (fd[type] == null) {
+            fd[type] = fs.openSync(file + type, 'a');
+          }
+        } catch (_error) {}
+        try {
+          return fs.writeSync(fd[type], d);
+        } catch (_error) {
+          fd[type] = fs.openSync(file + type, 'a');
+          try {
+            return fs.writeSync(fd[type], d);
+          } catch (_error) {}
+        }
       };
     };
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -105,16 +120,26 @@ module.exports = Server;
     _fn1 = function(event) {
       return process.on(event, (function(_this) {
         return function() {
-          var args;
+          var args, _k, _len2, _ref2;
           args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-          console.log.apply(console, ['Event:', event].concat(__slice.call(args)));
           if (!(cleaned_up && socket_file)) {
             console.log('unlinking', socket_file);
             try {
               fs.unlink(socket_file);
+              _ref2 = ['err', 'out'];
+              for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+                type = _ref2[_k];
+                if (!fd[type]) {
+                  continue;
+                }
+                fs.closeSync(fd[type]);
+                delete fd[type];
+              }
               cleaned_up = true;
             } catch (_error) {}
           }
+          type = event === 'uncaughtException' ? 'error' : 'log';
+          console[type].apply(console, ['Event:', event].concat(__slice.call(args)));
           if (event !== 'exit') {
             return process.exit(0);
           }
