@@ -123,7 +123,6 @@ module.exports = Server;
           var args, _k, _len2, _ref2;
           args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
           if (!(cleaned_up && socket_file)) {
-            console.log('unlinking', socket_file);
             try {
               fs.unlink(socket_file);
               _ref2 = ['err', 'out'];
@@ -138,8 +137,11 @@ module.exports = Server;
               cleaned_up = true;
             } catch (_error) {}
           }
-          type = event === 'uncaughtException' ? 'error' : 'log';
-          console[type].apply(console, ['Event:', event].concat(__slice.call(args)));
+          if (event === 'uncaughtException') {
+            console.error('[PROCESS EVENT] uncaughtException\n' + args[0].stack);
+          } else {
+            console.log.apply(console, ['[PROCESS EVENT]', event].concat(__slice.call(args)));
+          }
           if (event !== 'exit') {
             return process.exit(0);
           }

@@ -89,7 +89,7 @@ do ->
       do (event) ->
         process.on event, (args...) =>
           unless cleaned_up and socket_file
-            console.log 'unlinking', socket_file
+            # console.log 'unlinking', socket_file
             try
               fs.unlink socket_file
               for type in ['err', 'out'] when fd[type]
@@ -97,8 +97,10 @@ do ->
                 delete fd[type]
               cleaned_up = true
 
-          type = if event is 'uncaughtException' then 'error' else 'log'
-          console[type] 'Event:', event, args...
+          if event is 'uncaughtException'
+            console.error '[PROCESS EVENT] uncaughtException\n' + args[0].stack
+          else
+            console.log '[PROCESS EVENT]', event, args...
 
           unless event is 'exit'
             process.exit 0
