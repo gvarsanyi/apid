@@ -68,6 +68,14 @@ Server instance. Utilize it for creating daemons.
 ## apid.server.start(daemon_name[, options][, ready_callback_function])
 Fires up daemon
 
+## apid.server.onConnect(fn)
+Subscribes for "client is connected" event. This happens:
+    - right after the client has fully exposed its features to the server, and
+    - right before the server sends acknowledge message to client
+Not that this callback function does NOT have the clients API attached to it
+(e.g: no cb.log, no cb.error, no cb.remote.*) as this is not created by a client
+call.
+
 ## .expose(key[, subkey[, subsubkey, ...]], function_reference) or apid.expose({key: {subkey: function_reference}})
 Exposes a function (or functions on an object) to make them available for connecting peers on the .remote object
 Asynchronous alert:

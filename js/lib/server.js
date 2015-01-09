@@ -15,12 +15,16 @@ exposed_socket = null;
 Server = (function(_super) {
   __extends(Server, _super);
 
-  function Server() {
-    this.start = __bind(this.start, this);
-    return Server.__super__.constructor.apply(this, arguments);
-  }
-
   Server.prototype.jotServer = null;
+
+  Server.prototype.onConnectCue = null;
+
+  function Server() {
+    this.onConnect = __bind(this.onConnect, this);
+    this.start = __bind(this.start, this);
+    this.onConnectCue = [];
+    Server.__super__.constructor.apply(this, arguments);
+  }
 
   Server.prototype.start = function(name, options, cb) {
     var _ref;
@@ -41,8 +45,12 @@ Server = (function(_super) {
         _this.revealExposed();
         exposed_socket = socket;
         return socket.on('data', function(data) {
+          var fn;
           if (data.api) {
             _this.attachRemote(data);
+            while (fn = _this.onConnectCue.shift()) {
+              fn();
+            }
             return socket.write({
               ack: 1
             });
@@ -54,7 +62,27 @@ Server = (function(_super) {
         });
       };
     })(this));
+    this.jotServer.on('error', (function(_this) {
+      return function(err) {
+        if (err.code === 'EADDRINUSE') {
+          return fs.unlink(_this.socketFile, function(unlink_err) {
+            if (unlink_err) {
+              console.error(unlink_err.stack);
+              console.error(err.stack);
+              process.exit(1);
+            }
+            return _this.jotServer.listen(_this.socketFile);
+          });
+        } else {
+          throw err;
+        }
+      };
+    })(this));
     return this.jotServer.listen(this.socketFile);
+  };
+
+  Server.prototype.onConnect = function(fn) {
+    this.onConnectCue.push(fn);
   };
 
   return Server;
@@ -120,7 +148,7 @@ module.exports = Server;
     _fn1 = function(event) {
       return process.on(event, (function(_this) {
         return function() {
-          var args, _k, _len2, _ref2;
+          var args, exit_code, _k, _len2, _ref2;
           args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
           if (!(cleaned_up && socket_file)) {
             try {
@@ -143,7 +171,8 @@ module.exports = Server;
             console.log.apply(console, ['[PROCESS EVENT]', event].concat(__slice.call(args)));
           }
           if (event !== 'exit') {
-            return process.exit(0);
+            exit_code = event === 'uncaughtException' ? 1 : 0;
+            return process.exit(exit_code);
           }
         };
       })(this));

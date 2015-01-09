@@ -8,7 +8,14 @@ exposed_socket = null
 
 
 class Server extends Bridge
-  jotServer: null # jotServer
+  jotServer:    null # jotServer
+  onConnectCue: null # []
+
+
+  constructor: ->
+    @onConnectCue = []
+    super
+
 
   start: (name, options, cb) =>
     unless typeof options is 'object'
@@ -30,14 +37,30 @@ class Server extends Bridge
         # console.log 'data', data
         if data.api
           @attachRemote data
+          while fn = @onConnectCue.shift()
+            fn()
           socket.write ack: 1
         else if data.req
           @request data.req
         else
           @response data?.res
 
+    @jotServer.on 'error', (err) =>
+      if err.code is 'EADDRINUSE' # need some clean-up
+        fs.unlink @socketFile, (unlink_err) =>
+          if unlink_err
+            console.error unlink_err.stack
+            console.error err.stack
+            process.exit 1
+          @jotServer.listen @socketFile
+      else
+        throw err
+
     @jotServer.listen @socketFile
 
+  onConnect: (fn) =>
+    @onConnectCue.push fn
+    return
 
 module.exports = Server
 
@@ -103,6 +126,7 @@ do ->
             console.log '[PROCESS EVENT]', event, args...
 
           unless event is 'exit'
-            process.exit 0
+            exit_code = if event is 'uncaughtException' then 1 else 0
+            process.exit exit_code
 
     return
