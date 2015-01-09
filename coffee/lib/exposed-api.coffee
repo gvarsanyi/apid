@@ -122,7 +122,7 @@ class ExposedApi extends RemoteApi
       else
         target_fn cb
     catch err
-      console.error 'failed request', req, err
+      console.error 'failed request', req, err.stack
       cb err
 
 

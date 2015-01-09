@@ -199,7 +199,7 @@ ExposedApi = (function(_super) {
       }
     } catch (_error) {
       err = _error;
-      console.error('failed request', req, err);
+      console.error('failed request', req, err.stack);
       return cb(err);
     }
   };
