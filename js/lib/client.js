@@ -1,7 +1,9 @@
-var Bridge, Client, arg, daemon_std, jot, _i, _len, _ref,
+var Bridge, Client, arg, daemon_std, fs, jot, _i, _len, _ref,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+fs = require('fs');
 
 jot = require('json-over-tcp');
 
@@ -41,7 +43,7 @@ Client = (function(_super) {
     mkdirp = require('mkdirp');
     return mkdirp(this.configPath, (function(_this) {
       return function(err) {
-        var connect, daemon, setup;
+        var buffer, buffer_count, connect, daemon, setup;
         if (err) {
           return cb(err);
         }
@@ -95,7 +97,18 @@ Client = (function(_super) {
             });
           });
         };
-        daemon.on('started', connect).on('running', connect).on('error', function(err) {
+        buffer_count = 0;
+        buffer = function() {
+          return fs.exists(_this.socketFile, function(exists) {
+            if (exists || buffer_count > 50) {
+              return setTimeout(connect, 1);
+            } else {
+              buffer_count += 1;
+              return setTimeout(buffer, 10);
+            }
+          });
+        };
+        daemon.on('started', buffer).on('running', connect).on('error', function(err) {
           throw err;
         });
         return daemon.start();

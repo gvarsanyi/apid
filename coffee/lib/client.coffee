@@ -1,3 +1,4 @@
+fs  = require 'fs'
 jot = require 'json-over-tcp'
 
 Bridge = require './bridge'
@@ -70,8 +71,17 @@ class Client extends Bridge
             else
               @response data?.res
 
+      buffer_count = 0
+      buffer = =>
+        fs.exists @socketFile, (exists) ->
+          if exists or buffer_count > 50
+            setTimeout connect, 1
+          else
+            buffer_count += 1
+            setTimeout buffer, 10
+
       daemon
-      .on('started', connect)
+      .on('started', buffer)
       .on('running', connect)
       .on('error', (err) -> throw err)
 
