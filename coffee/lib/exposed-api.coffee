@@ -1,6 +1,7 @@
 callbax = require 'callbax'
 
 RemoteApi = require './remote-api'
+stringify = require './stringify'
 
 
 class ExposedApi extends RemoteApi
@@ -79,7 +80,7 @@ class ExposedApi extends RemoteApi
         for arg, i in args when arg instanceof Error
           (msg.res.errType ?= []).push i
           args[i] = arg.message
-        msg.res.args = JSON.stringify args
+        msg.res.args = stringify args
       @socket.write msg
 
     cb.remote  = target

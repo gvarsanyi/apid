@@ -1,4 +1,4 @@
-var ExposedApi, RemoteApi, callbax,
+var ExposedApi, RemoteApi, callbax, stringify,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -7,6 +7,8 @@ var ExposedApi, RemoteApi, callbax,
 callbax = require('callbax');
 
 RemoteApi = require('./remote-api');
+
+stringify = require('./stringify');
 
 ExposedApi = (function(_super) {
   __extends(ExposedApi, _super);
@@ -131,7 +133,7 @@ ExposedApi = (function(_super) {
             ((_base = msg.res).errType != null ? _base.errType : _base.errType = []).push(i);
             args[i] = arg.message;
           }
-          msg.res.args = JSON.stringify(args);
+          msg.res.args = stringify(args);
         }
         return _this.socket.write(msg);
       };

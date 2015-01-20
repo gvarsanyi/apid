@@ -1,6 +1,7 @@
 callbax = require 'callbax'
 
-ReadyCue = require './ready-cue'
+ReadyCue  = require './ready-cue'
+stringify = require './stringify'
 
 
 class RemoteApi extends ReadyCue
@@ -31,7 +32,7 @@ class RemoteApi extends ReadyCue
         try
           msg = req: {id: callback_id, fn: keys}
           if args.length
-            msg.req.args = JSON.stringify args
+            msg.req.args = stringify args
           @socket.write msg
         catch err
           console.error 'error requesting:', err

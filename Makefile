@@ -13,3 +13,4 @@ test: compile
 	coffee example/coffee/app.coffee --daemon-restart
 	coffee example/coffee/app.coffee
 	coffee example/coffee/app.coffee --daemon-stop
+	@echo 'DONE'
