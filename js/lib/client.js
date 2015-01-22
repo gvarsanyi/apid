@@ -43,7 +43,7 @@ Client = (function(_super) {
     mkdirp = require('mkdirp');
     return mkdirp(this.configPath, (function(_this) {
       return function(err) {
-        var buffer, buffer_count, connect, daemon, setup;
+        var buffer, buffer_count, connect, daemon, setup, timeout;
         if (err) {
           return cb(err);
         }
@@ -56,6 +56,12 @@ Client = (function(_super) {
         };
         if (options.coffeePath) {
           setup.coffeePath = options.coffeePath;
+        }
+        timeout = options.timeout || 5;
+        if (!(timeout > 0)) {
+          timeout = 5;
+        } else if (timeout > 30) {
+          timeout = 30;
         }
         daemon = require('daemonize2').setup(setup);
         if (require('./daemon-control')(daemon, _this.name)) {
@@ -97,9 +103,8 @@ Client = (function(_super) {
         buffer_count = 0;
         buffer = function() {
           return fs.exists(_this.socketFile, function(exists) {
-            if (buffer_count > 19) {
-              console.error('Socket file wait timeout');
-              return connect();
+            if (timeout > buffer_count * (buffer_count / 2) * 10) {
+              throw new Error('Socket wait exceeded timeout of ~' + timeout + 's');
             } else if (exists) {
               return setTimeout(connect, 1);
             } else {

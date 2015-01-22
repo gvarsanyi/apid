@@ -62,6 +62,15 @@ Returns newly created or existing named client
 ## client.connect(daemon_entry_absolute_path[, options][, ready_callback_function])
 Connects to APID daemon as a client, fires up the daemon if not running yet
 
+Useful options:
+- *cwd*: set a current working directory for the daemon (if not running yet)
+- *coffeePath*: if you want to fire up a coffee-script daemon you may have to
+  specify a coffee-script library path to require
+- *stdout* and *stderr*: broadcast daemon's STDOUT and/or STDERR outputs to client's console
+- *timeout*: (in seconds) max wait time for socket creation. Big projects with a
+  lot of syncronous boot tasks (like a ton of modules to require) may take a
+  while to fire up. Default is 5 seconds, but it can be set between 0..30 seconds.
+
 ## apid.server
 Server instance. Utilize it for creating daemons.
 

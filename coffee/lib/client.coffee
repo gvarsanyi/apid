@@ -41,6 +41,12 @@ class Client extends Bridge
       if options.coffeePath
         setup.coffeePath = options.coffeePath
 
+      timeout = options.timeout or 5
+      unless timeout > 0
+        timeout = 5
+      else if timeout > 30
+        timeout = 30
+
       daemon = require('daemonize2').setup setup
 
       if require('./daemon-control') daemon, @name
@@ -76,9 +82,8 @@ class Client extends Bridge
       buffer_count = 0
       buffer = =>
         fs.exists @socketFile, (exists) ->
-          if buffer_count > 19
-            console.error 'Socket file wait timeout'
-            connect()
+          if timeout > buffer_count * (buffer_count / 2) * 10
+            throw new Error 'Socket wait exceeded timeout of ~' + timeout + 's'
           else if exists
             setTimeout connect, 1
           else
