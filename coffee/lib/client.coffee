@@ -55,8 +55,10 @@ class Client extends Bridge
           @socket.on 'data', (data) =>
             # console.log 'data', data
             if data.std
-              for type, d of data.std when daemon_std[type] and data.std[type]?
-                process.stderr.write '[APID STD' + type.toUpperCase() + '] ' + d
+              if (str = data.std.out) and (daemon_std.out or options.stdout)
+                process.stdout.write '[APID STDOUT] ' + str
+              if (str = data.std.err) and (daemon_std.err or options.stderr)
+                process.stderr.write '[APID STDERR] ' + str
             else if data.api
               @attachRemote data
               handshake += 1

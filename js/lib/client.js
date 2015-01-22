@@ -67,17 +67,14 @@ Client = (function(_super) {
           return _this.socket = jot.connect(_this.socketFile, function() {
             _this.revealExposed();
             return _this.socket.on('data', function(data) {
-              var d, type, _ref2, _results;
+              var str;
               if (data.std) {
-                _ref2 = data.std;
-                _results = [];
-                for (type in _ref2) {
-                  d = _ref2[type];
-                  if (daemon_std[type] && (data.std[type] != null)) {
-                    _results.push(process.stderr.write('[APID STD' + type.toUpperCase() + '] ' + d));
-                  }
+                if ((str = data.std.out) && (daemon_std.out || options.stdout)) {
+                  process.stdout.write('[APID STDOUT] ' + str);
                 }
-                return _results;
+                if ((str = data.std.err) && (daemon_std.err || options.stderr)) {
+                  return process.stderr.write('[APID STDERR] ' + str);
+                }
               } else if (data.api) {
                 _this.attachRemote(data);
                 handshake += 1;

@@ -72,9 +72,8 @@ Fires up daemon
 Subscribes for "client is connected" event. This happens:
     - right after the client has fully exposed its features to the server, and
     - right before the server sends acknowledge message to client
-Not that this callback function does NOT have the clients API attached to it
-(e.g: no cb.log, no cb.error, no cb.remote.*) as this is not created by a client
-call.
+Callback has one argument: the client's remote object, e.g. whatever the client
+exposed.
 
 ## .expose(key[, subkey[, subsubkey, ...]], function_reference) or apid.expose({key: {subkey: function_reference}})
 Exposes a function (or functions on an object) to make them available for connecting peers on the .remote object

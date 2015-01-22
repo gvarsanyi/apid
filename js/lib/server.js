@@ -49,7 +49,7 @@ Server = (function(_super) {
           if (data.api) {
             _this.attachRemote(data);
             while (fn = _this.onConnectCue.shift()) {
-              fn();
+              fn(_this.remote);
             }
             return socket.write({
               ack: 1

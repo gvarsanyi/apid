@@ -38,7 +38,7 @@ class Server extends Bridge
         if data.api
           @attachRemote data
           while fn = @onConnectCue.shift()
-            fn()
+            fn @remote
           socket.write ack: 1
         else if data.req
           @request data.req
