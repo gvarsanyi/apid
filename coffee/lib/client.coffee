@@ -76,11 +76,14 @@ class Client extends Bridge
       buffer_count = 0
       buffer = =>
         fs.exists @socketFile, (exists) ->
-          if exists or buffer_count > 50
+          if buffer_count > 19
+            console.error 'Socket file wait timeout'
+            connect()
+          else if exists
             setTimeout connect, 1
           else
             buffer_count += 1
-            setTimeout buffer, 10
+            setTimeout buffer, buffer_count * 10
 
       daemon
       .on('started', buffer)

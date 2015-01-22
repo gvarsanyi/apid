@@ -97,11 +97,14 @@ Client = (function(_super) {
         buffer_count = 0;
         buffer = function() {
           return fs.exists(_this.socketFile, function(exists) {
-            if (exists || buffer_count > 50) {
+            if (buffer_count > 19) {
+              console.error('Socket file wait timeout');
+              return connect();
+            } else if (exists) {
               return setTimeout(connect, 1);
             } else {
               buffer_count += 1;
-              return setTimeout(buffer, 10);
+              return setTimeout(buffer, buffer_count * 10);
             }
           });
         };
