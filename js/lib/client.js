@@ -43,7 +43,7 @@ Client = (function(_super) {
     mkdirp = require('mkdirp');
     return mkdirp(this.configPath, (function(_this) {
       return function(err) {
-        var buffer, buffer_count, connect, daemon, setup, timeout;
+        var buffer, buffer_count, connect, daemon, last_reconnect, listener_added, setup, timeout;
         if (err) {
           return cb(err);
         }
@@ -67,11 +67,17 @@ Client = (function(_super) {
         if (require('./daemon-control')(daemon, _this.name)) {
           return;
         }
+        listener_added = false;
+        last_reconnect = null;
         connect = function() {
           var handshake;
           handshake = 0;
-          return _this.socket = jot.connect(_this.socketFile, function() {
+          _this.socket = jot.connect(_this.socketFile, function() {
             _this.revealExposed();
+            if (listener_added) {
+              return;
+            }
+            listener_added = true;
             return _this.socket.on('data', function(data) {
               var str;
               if (data.std) {
@@ -98,6 +104,16 @@ Client = (function(_super) {
                 return _this.response(data != null ? data.res : void 0);
               }
             });
+          });
+          return _this.socket.on('error', function(err) {
+            if (!(last_reconnect > (new Date).getTime() - 1000)) {
+              console.error('JOT socket error:', err);
+              console.log('Attempting to reconnect in .1s');
+              return setTimeout((function() {
+                last_reconnect = (new Date).getTime();
+                return connect();
+              }), 100);
+            }
           });
         };
         buffer_count = 0;

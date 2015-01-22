@@ -52,12 +52,17 @@ class Client extends Bridge
       if require('./daemon-control') daemon, @name
         return # daemon control was called
 
+      listener_added = false
+      last_reconnect = null
       connect = =>
         handshake = 0
 
         @socket = jot.connect @socketFile, =>
           @revealExposed()
 
+          if listener_added
+            return # prevent dupe handler on error/reconnect
+          listener_added = true
           @socket.on 'data', (data) =>
             # console.log 'data', data
             if data.std
@@ -78,6 +83,15 @@ class Client extends Bridge
               @request data.req
             else
               @response data?.res
+
+        @socket.on 'error', (err) =>
+          unless last_reconnect > (new Date).getTime() - 1000
+            console.error 'JOT socket error:', err
+            console.log 'Attempting to reconnect in .1s'
+            setTimeout (->
+              last_reconnect = (new Date).getTime()
+              connect()
+            ), 100
 
       buffer_count = 0
       buffer = =>
