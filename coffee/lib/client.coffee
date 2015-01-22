@@ -82,7 +82,7 @@ class Client extends Bridge
       buffer_count = 0
       buffer = =>
         fs.exists @socketFile, (exists) ->
-          if timeout > buffer_count * (buffer_count / 2) * 10
+          if timeout * 1000 < buffer_count * (buffer_count / 2) * 10
             throw new Error 'Socket wait exceeded timeout of ~' + timeout + 's'
           else if exists
             setTimeout connect, 1
