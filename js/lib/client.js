@@ -103,7 +103,7 @@ Client = (function(_super) {
         buffer_count = 0;
         buffer = function() {
           return fs.exists(_this.socketFile, function(exists) {
-            if (timeout > buffer_count * (buffer_count / 2) * 10) {
+            if (timeout * 1000 < buffer_count * (buffer_count / 2) * 10) {
               throw new Error('Socket wait exceeded timeout of ~' + timeout + 's');
             } else if (exists) {
               return setTimeout(connect, 1);
