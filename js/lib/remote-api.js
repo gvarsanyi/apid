@@ -23,6 +23,7 @@ RemoteApi = (function(_super) {
 
   function RemoteApi() {
     this.response = __bind(this.response, this);
+    this.connectionLost = __bind(this.connectionLost, this);
     this.attachRemote = __bind(this.attachRemote, this);
     RemoteApi.__super__.constructor.apply(this, arguments);
     this.remote = {};
@@ -101,6 +102,16 @@ RemoteApi = (function(_super) {
     for (key in _ref) {
       value = _ref[key];
       target_session[key] = value;
+    }
+  };
+
+  RemoteApi.prototype.connectionLost = function(remote_name) {
+    var cb, id, _ref;
+    _ref = this.remoteCalls;
+    for (id in _ref) {
+      cb = _ref[id];
+      delete this.remoteCalls[id];
+      cb(new Error('Connection to ' + remote_name + ' closed'));
     }
   };
 

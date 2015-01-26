@@ -44,7 +44,7 @@ Server = (function(_super) {
         _this.socket = socket;
         _this.revealExposed();
         exposed_socket = socket;
-        return socket.on('data', function(data) {
+        socket.on('data', function(data) {
           var fn;
           if (data.api) {
             _this.attachRemote(data);
@@ -59,6 +59,9 @@ Server = (function(_super) {
           } else {
             return _this.response(data != null ? data.res : void 0);
           }
+        });
+        return socket.on('close', function() {
+          return _this.connectionLost('client');
         });
       };
     })(this));

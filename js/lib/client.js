@@ -105,7 +105,7 @@ Client = (function(_super) {
               }
             });
           });
-          return _this.socket.on('error', function(err) {
+          _this.socket.on('error', function(err) {
             if (!(last_reconnect > (new Date).getTime() - 1000)) {
               console.error('JOT socket error:', err);
               console.log('Attempting to reconnect in .1s');
@@ -114,6 +114,9 @@ Client = (function(_super) {
                 return connect();
               }), 100);
             }
+          });
+          return _this.socket.on('close', function() {
+            return _this.connectionLost('daemon');
           });
         };
         buffer_count = 0;

@@ -62,6 +62,12 @@ class RemoteApi extends ReadyCue
     # console.log 'api/target', target, target_session, map
     return
 
+  connectionLost: (remote_name) =>
+    for id, cb of @remoteCalls
+      delete @remoteCalls[id]
+      cb new Error 'Connection to ' + remote_name + ' closed'
+    return
+
   response: (res) =>
     callbacks = @remoteCalls
     unless res?.id >= 1 and cb = callbacks[res.id]

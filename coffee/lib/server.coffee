@@ -45,6 +45,9 @@ class Server extends Bridge
         else
           @response data?.res
 
+      socket.on 'close', =>
+        @connectionLost 'client'
+
     @jotServer.on 'error', (err) =>
       if err.code is 'EADDRINUSE' # need some clean-up
         fs.unlink @socketFile, (unlink_err) =>

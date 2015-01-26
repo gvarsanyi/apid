@@ -93,6 +93,9 @@ class Client extends Bridge
               connect()
             ), 100
 
+        @socket.on 'close', =>
+          @connectionLost 'daemon'
+
       buffer_count = 0
       buffer = =>
         fs.exists @socketFile, (exists) ->
