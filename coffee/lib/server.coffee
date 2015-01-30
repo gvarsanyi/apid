@@ -1,21 +1,45 @@
 fs  = require 'fs'
 jot = require 'json-over-tcp'
 
-Bridge = require './bridge'
+Bridge     = require './bridge'
+ExposedApi = require './exposed-api'
+ReadyCue   = require './ready-cue'
 
 
-exposed_socket = null
+exposed_sockets = []
 
 
-class Server extends Bridge
+class Server extends ReadyCue
   jotServer:    null # jotServer
-  onConnectCue: null # []
+  onConnectFns: null # []
+
+  # for Bridge
+  configPath: null
+  name:       null # String
+  options:    null # {}
+
+  # for ExposedApi
+  exposed: null # {}
+  session: null # {}
 
 
   constructor: ->
-    @onConnectCue = []
-    super
+    @onConnectFns = []
 
+    # for ExposedApi
+    @exposed = {}
+    @session = {}
+
+    # for Bridge
+    @options = {}
+
+  # for ExposedApi
+  expose:     ExposedApi::expose
+  exposeHash: ExposedApi::exposeHash
+
+  # for Bridge
+  setConfig:  Bridge::setConfig
+  setOptions: Bridge::setOptions
 
   start: (name, options, cb) =>
     unless typeof options is 'object'
@@ -28,25 +52,34 @@ class Server extends Bridge
       console.log 'server listening on:', @socketFile
       @readyFlush cb
 
-    @jotServer.on 'connection', (@socket) =>
-      @revealExposed()
+    @jotServer.on 'connection', (socket) =>
+      bridge = new Bridge
+      bridge.setConfig name, options
+      bridge.expose @exposed
+      bridge.session = @session
+      bridge.socket = socket
+      bridge.revealExposed()
 
-      exposed_socket = socket
+      exposed_sockets.push socket
 
       socket.on 'data', (data) =>
         # console.log 'data', data
         if data.api
-          @attachRemote data
-          while fn = @onConnectCue.shift()
-            fn @remote
+          bridge.attachRemote data
+          for fn in @onConnectFns
+            fn bridge.remote
           socket.write ack: 1
         else if data.req
-          @request data.req
+          bridge.request data.req
         else
-          @response data?.res
+          bridge.response data?.res
+
+      socket.on 'error', (err) ->
+        # trigger silent close by catching errors. Followed by 'close' event.
 
       socket.on 'close', =>
-        @connectionLost 'client'
+        console.log '[CLOSE]'
+        bridge.connectionLost 'client'
 
     @jotServer.on 'error', (err) =>
       if err.code is 'EADDRINUSE' # need some clean-up
@@ -62,7 +95,7 @@ class Server extends Bridge
     @jotServer.listen @socketFile
 
   onConnect: (fn) =>
-    @onConnectCue.push fn
+    @onConnectFns.push fn
     return
 
 module.exports = Server
@@ -94,10 +127,11 @@ do ->
     for type in ['err', 'out']
       do (type) ->
         process['std' + type].write = (d) ->
-          if exposed_socket
+          if exposed_sockets.length
             (inf = {})[type] = d
-            try
-              exposed_socket.write std: inf
+            for exposed_socket in exposed_sockets
+              try
+                exposed_socket.write std: inf
           try
             fd[type] ?= fs.openSync file + type, 'a'
           try

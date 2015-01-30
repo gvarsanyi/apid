@@ -1,4 +1,4 @@
-var Bridge, Server, exposed_socket, fs, jot,
+var Bridge, ExposedApi, ReadyCue, Server, exposed_sockets, fs, jot,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -10,21 +10,45 @@ jot = require('json-over-tcp');
 
 Bridge = require('./bridge');
 
-exposed_socket = null;
+ExposedApi = require('./exposed-api');
+
+ReadyCue = require('./ready-cue');
+
+exposed_sockets = [];
 
 Server = (function(_super) {
   __extends(Server, _super);
 
   Server.prototype.jotServer = null;
 
-  Server.prototype.onConnectCue = null;
+  Server.prototype.onConnectFns = null;
+
+  Server.prototype.configPath = null;
+
+  Server.prototype.name = null;
+
+  Server.prototype.options = null;
+
+  Server.prototype.exposed = null;
+
+  Server.prototype.session = null;
 
   function Server() {
     this.onConnect = __bind(this.onConnect, this);
     this.start = __bind(this.start, this);
-    this.onConnectCue = [];
-    Server.__super__.constructor.apply(this, arguments);
+    this.onConnectFns = [];
+    this.exposed = {};
+    this.session = {};
+    this.options = {};
   }
+
+  Server.prototype.expose = ExposedApi.prototype.expose;
+
+  Server.prototype.exposeHash = ExposedApi.prototype.exposeHash;
+
+  Server.prototype.setConfig = Bridge.prototype.setConfig;
+
+  Server.prototype.setOptions = Bridge.prototype.setOptions;
 
   Server.prototype.start = function(name, options, cb) {
     var _ref;
@@ -41,27 +65,36 @@ Server = (function(_super) {
     })(this));
     this.jotServer.on('connection', (function(_this) {
       return function(socket) {
-        _this.socket = socket;
-        _this.revealExposed();
-        exposed_socket = socket;
+        var bridge;
+        bridge = new Bridge;
+        bridge.setConfig(name, options);
+        bridge.expose(_this.exposed);
+        bridge.session = _this.session;
+        bridge.socket = socket;
+        bridge.revealExposed();
+        exposed_sockets.push(socket);
         socket.on('data', function(data) {
-          var fn;
+          var fn, _i, _len, _ref1;
           if (data.api) {
-            _this.attachRemote(data);
-            while (fn = _this.onConnectCue.shift()) {
-              fn(_this.remote);
+            bridge.attachRemote(data);
+            _ref1 = _this.onConnectFns;
+            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+              fn = _ref1[_i];
+              fn(bridge.remote);
             }
             return socket.write({
               ack: 1
             });
           } else if (data.req) {
-            return _this.request(data.req);
+            return bridge.request(data.req);
           } else {
-            return _this.response(data != null ? data.res : void 0);
+            return bridge.response(data != null ? data.res : void 0);
           }
         });
+        socket.on('error', function(err) {});
         return socket.on('close', function() {
-          return _this.connectionLost('client');
+          console.log('[CLOSE]');
+          return bridge.connectionLost('client');
         });
       };
     })(this));
@@ -85,12 +118,12 @@ Server = (function(_super) {
   };
 
   Server.prototype.onConnect = function(fn) {
-    this.onConnectCue.push(fn);
+    this.onConnectFns.push(fn);
   };
 
   return Server;
 
-})(Bridge);
+})(ReadyCue);
 
 module.exports = Server;
 
@@ -117,14 +150,17 @@ module.exports = Server;
     _ref = ['err', 'out'];
     _fn = function(type) {
       return process['std' + type].write = function(d) {
-        var inf;
-        if (exposed_socket) {
+        var exposed_socket, inf, _j, _len1;
+        if (exposed_sockets.length) {
           (inf = {})[type] = d;
-          try {
-            exposed_socket.write({
-              std: inf
-            });
-          } catch (_error) {}
+          for (_j = 0, _len1 = exposed_sockets.length; _j < _len1; _j++) {
+            exposed_socket = exposed_sockets[_j];
+            try {
+              exposed_socket.write({
+                std: inf
+              });
+            } catch (_error) {}
+          }
         }
         try {
           if (fd[type] == null) {

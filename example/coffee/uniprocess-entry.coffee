@@ -33,5 +33,5 @@ server.expose 'sumWithPing', (a, b, cb) ->
     cb null, a + b, cb.session
 
 
-server.start 'exampleapid', (err) ->
-  console.log 'server ready', err, server.exposed
+server.start 'apid-example', (err) ->
+  console.log 'server ready', err or ''

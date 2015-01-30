@@ -194,6 +194,12 @@ ExposedApi = (function(_super) {
       if (typeof target_fn !== 'function') {
         throw new Error('No such exposed method: ' + req.fn);
       }
+    } catch (_error) {
+      err = _error;
+      console.error('failed request', req, err, err.stack);
+      cb(err);
+    }
+    try {
       if (args) {
         return target_fn.apply(null, __slice.call(args).concat([cb]));
       } else {
@@ -201,7 +207,6 @@ ExposedApi = (function(_super) {
       }
     } catch (_error) {
       err = _error;
-      console.error('failed request', req, err.stack);
       return cb(err);
     }
   };

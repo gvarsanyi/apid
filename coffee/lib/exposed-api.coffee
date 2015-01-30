@@ -117,13 +117,16 @@ class ExposedApi extends RemoteApi
 
       unless typeof target_fn is 'function'
         throw new Error 'No such exposed method: ' + req.fn
+    catch err
+      console.error 'failed request', req, err, err.stack
+      cb err
 
+    try
       if args
         target_fn args..., cb
       else
         target_fn cb
     catch err
-      console.error 'failed request', req, err.stack
       cb err
 
 

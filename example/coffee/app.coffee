@@ -2,7 +2,7 @@ console.time 'init'
 apid = require '../../coffee/apid'
 
 
-client = apid.client 'exampleapid'
+client = apid.client 'apid-example'
 remote = client.remote
 console.timeEnd 'init'
 

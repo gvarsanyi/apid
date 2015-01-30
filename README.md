@@ -79,10 +79,9 @@ Fires up daemon
 
 ## apid.server.onConnect(fn)
 Subscribes for "client is connected" event. This happens:
-    - right after the client has fully exposed its features to the server, and
+    - every time a client is connected and has fully exposed its features to the server, and
     - right before the server sends acknowledge message to client
-Callback has one argument: the client's remote object, e.g. whatever the client
-exposed.
+Callback has one argument: the client's remote object, e.g. whatever the client exposed.
 
 ## .expose(key[, subkey[, subsubkey, ...]], function_reference) or apid.expose({key: {subkey: function_reference}})
 Exposes a function (or functions on an object) to make them available for connecting peers on the .remote object

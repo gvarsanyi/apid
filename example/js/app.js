@@ -1,5 +1,5 @@
 var apid   = require('../../js/apid'),
-    client = apid.client('my-daemon-name-id');
+    client = apid.client('apid-example');
 
 // expose API on the client. This can be called from the daemon.
 client.expose('version', function (cb) {
