@@ -18,6 +18,7 @@ ExposedApi = (function(_super) {
   ExposedApi.prototype.session = null;
 
   function ExposedApi() {
+    this.wrapCallback = __bind(this.wrapCallback, this);
     this.request = __bind(this.request, this);
     this.revealExposed = __bind(this.revealExposed, this);
     this.exposeHash = __bind(this.exposeHash, this);
@@ -112,7 +113,7 @@ ExposedApi = (function(_super) {
   };
 
   ExposedApi.prototype.request = function(req) {
-    var args, cb, check_log, err, functions, item, target, target_fn, target_session;
+    var args, cb, err, functions, item, target, target_fn, target_session;
     target = this.remote;
     target_session = this.remoteSession;
     cb = callbax((function(_this) {
@@ -138,33 +139,7 @@ ExposedApi = (function(_super) {
         return _this.socket.write(msg);
       };
     })(this));
-    cb.remote = target;
-    cb.session = target_session;
-    check_log = function(args, callback) {
-      if (typeof callback !== 'function' && (callback != null)) {
-        args.push(callback);
-        callback = function() {};
-      }
-      if (args.length) {
-        return callback;
-      } else {
-        return null;
-      }
-    };
-    cb.log = function() {
-      var args, callback, _i, _ref;
-      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
-      if (callback = check_log(args, callback)) {
-        return (_ref = cb.remote.console).log.apply(_ref, __slice.call(args).concat([callback]));
-      }
-    };
-    cb.errorLog = function() {
-      var args, callback, _i, _ref;
-      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
-      if (callback = check_log(args, callback)) {
-        return (_ref = cb.remote.console).error.apply(_ref, __slice.call(args).concat([callback]));
-      }
-    };
+    this.wrapCallback(cb, target, target_session);
     try {
       if (!((req != null ? req.id : void 0) >= 1)) {
         throw new Error('dropping request with invalid req id:' + req.id);
@@ -209,6 +184,38 @@ ExposedApi = (function(_super) {
       err = _error;
       return cb(err);
     }
+  };
+
+  ExposedApi.prototype.wrapCallback = function(cb, target, target_session) {
+    var check_log;
+    cb.remote = target;
+    cb.session = target_session;
+    check_log = function(args, callback) {
+      if (typeof callback !== 'function' && (callback != null)) {
+        args.push(callback);
+        callback = function() {};
+      }
+      if (args.length) {
+        return callback;
+      } else {
+        return null;
+      }
+    };
+    cb.log = function() {
+      var args, callback, _i, _ref;
+      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
+      if (callback = check_log(args, callback)) {
+        return (_ref = cb.remote.console).log.apply(_ref, __slice.call(args).concat([callback]));
+      }
+    };
+    cb.errorLog = function() {
+      var args, callback, _i, _ref;
+      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
+      if (callback = check_log(args, callback)) {
+        return (_ref = cb.remote.console).error.apply(_ref, __slice.call(args).concat([callback]));
+      }
+    };
+    return cb;
   };
 
   return ExposedApi;

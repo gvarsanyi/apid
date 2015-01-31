@@ -83,22 +83,7 @@ class ExposedApi extends RemoteApi
         msg.res.args = stringify args
       @socket.write msg
 
-    cb.remote  = target
-    cb.session = target_session
-
-    check_log = (args, callback) ->
-      if typeof callback isnt 'function' and callback?
-        args.push callback
-        callback = ->
-      if args.length then callback else null
-
-    cb.log = (args..., callback) ->
-      if callback = check_log args, callback
-        cb.remote.console.log args..., callback
-
-    cb.errorLog = (args..., callback) ->
-      if callback = check_log args, callback
-        cb.remote.console.error args..., callback
+    @wrapCallback cb, target, target_session
 
     try
       unless req?.id >= 1
@@ -128,6 +113,26 @@ class ExposedApi extends RemoteApi
         target_fn cb
     catch err
       cb err
+
+  wrapCallback: (cb, target, target_session) =>
+    cb.remote  = target
+    cb.session = target_session
+
+    check_log = (args, callback) ->
+      if typeof callback isnt 'function' and callback?
+        args.push callback
+        callback = ->
+      if args.length then callback else null
+
+    cb.log = (args..., callback) ->
+      if callback = check_log args, callback
+        cb.remote.console.log args..., callback
+
+    cb.errorLog = (args..., callback) ->
+      if callback = check_log args, callback
+        cb.remote.console.error args..., callback
+
+    cb
 
 
 module.exports = ExposedApi

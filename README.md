@@ -81,7 +81,7 @@ Fires up daemon
 Subscribes for "client is connected" event. This happens:
     - every time a client is connected and has fully exposed its features to the server, and
     - right before the server sends acknowledge message to client
-Callback has one argument: the client's remote object, e.g. whatever the client exposed.
+Callback function has exactly one argument: a metafunction that has exactly the same interface as regular callbacks (cb.remote, cb.session, cb.log, cb.errorLog) but will do nothing when called itself as cb()
 
 ## .expose(key[, subkey[, subsubkey, ...]], function_reference) or apid.expose({key: {subkey: function_reference}})
 Exposes a function (or functions on an object) to make them available for connecting peers on the .remote object
