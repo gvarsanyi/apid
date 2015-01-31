@@ -80,7 +80,7 @@ Server = (function(_super) {
             _ref1 = _this.onConnectFns;
             for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
               fn = _ref1[_i];
-              fn(bridge.wrapCallback((function() {}), target, target_session));
+              fn(bridge.wrapCallback(function() {}));
             }
             return socket.write({
               ack: 1

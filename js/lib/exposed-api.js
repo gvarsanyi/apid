@@ -113,9 +113,7 @@ ExposedApi = (function(_super) {
   };
 
   ExposedApi.prototype.request = function(req) {
-    var args, cb, err, functions, item, target, target_fn, target_session;
-    target = this.remote;
-    target_session = this.remoteSession;
+    var args, cb, err, functions, item, target_fn;
     cb = callbax((function(_this) {
       return function() {
         var arg, args, i, msg, _base, _i, _len;
@@ -139,7 +137,7 @@ ExposedApi = (function(_super) {
         return _this.socket.write(msg);
       };
     })(this));
-    this.wrapCallback(cb, target, target_session);
+    this.wrapCallback(cb);
     try {
       if (!((req != null ? req.id : void 0) >= 1)) {
         throw new Error('dropping request with invalid req id:' + req.id);
@@ -186,10 +184,10 @@ ExposedApi = (function(_super) {
     }
   };
 
-  ExposedApi.prototype.wrapCallback = function(cb, target, target_session) {
+  ExposedApi.prototype.wrapCallback = function(cb) {
     var check_log;
-    cb.remote = target;
-    cb.session = target_session;
+    cb.remote = this.remote;
+    cb.session = this.remoteSession;
     check_log = function(args, callback) {
       if (typeof callback !== 'function' && (callback != null)) {
         args.push(callback);

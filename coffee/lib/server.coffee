@@ -67,7 +67,7 @@ class Server extends ReadyCue
         if data.api
           bridge.attachRemote data
           for fn in @onConnectFns
-            fn bridge.wrapCallback (->), target, target_session
+            fn bridge.wrapCallback ->
           socket.write ack: 1
         else if data.req
           bridge.request data.req

@@ -71,9 +71,6 @@ class ExposedApi extends RemoteApi
     @socket.write {api: map, session: @session}
 
   request: (req) =>
-    target         = @remote
-    target_session = @remoteSession
-
     cb = callbax (args...) =>
       msg = res: {id: req.id}
       if args.length
@@ -83,7 +80,7 @@ class ExposedApi extends RemoteApi
         msg.res.args = stringify args
       @socket.write msg
 
-    @wrapCallback cb, target, target_session
+    @wrapCallback cb
 
     try
       unless req?.id >= 1
@@ -114,9 +111,9 @@ class ExposedApi extends RemoteApi
     catch err
       cb err
 
-  wrapCallback: (cb, target, target_session) =>
-    cb.remote  = target
-    cb.session = target_session
+  wrapCallback: (cb) =>
+    cb.remote  = @remote
+    cb.session = @remoteSession
 
     check_log = (args, callback) ->
       if typeof callback isnt 'function' and callback?
