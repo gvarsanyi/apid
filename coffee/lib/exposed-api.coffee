@@ -71,7 +71,7 @@ class ExposedApi extends RemoteApi
     @socket.write {api: map, session: @session}
 
   request: (req) =>
-    cb = callbax (args...) =>
+    cb = @wrapCallback (args...) =>
       msg = res: {id: req.id}
       if args.length
         for arg, i in args when arg instanceof Error
@@ -79,8 +79,6 @@ class ExposedApi extends RemoteApi
           args[i] = arg.message
         msg.res.args = stringify args
       @socket.write msg
-
-    @wrapCallback cb
 
     try
       unless req?.id >= 1
@@ -112,6 +110,8 @@ class ExposedApi extends RemoteApi
       cb err
 
   wrapCallback: (cb) =>
+    cb = callbax cb
+
     cb.remote  = @remote
     cb.session = @remoteSession
 
