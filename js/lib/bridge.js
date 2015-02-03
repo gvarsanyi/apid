@@ -1,7 +1,7 @@
 var Bridge, ExposedApi,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  __hasProp = {}.hasOwnProperty;
 
 ExposedApi = require('./exposed-api');
 
@@ -23,9 +23,9 @@ Bridge = (function(_super) {
     this.options = {};
   }
 
-  Bridge.prototype.setConfig = function(name, options) {
+  Bridge.prototype.setConfig = function(_at_name, options) {
     var home;
-    this.name = name;
+    this.name = _at_name;
     if (options != null) {
       this.setOptions(options);
     }
@@ -33,7 +33,7 @@ Bridge = (function(_super) {
     if (process.platform === 'win32') {
       home = process.env.USERPROFILE;
     }
-    this.configPath = home + '/.config/' + name;
+    this.configPath = home + '/.config/' + this.name;
     this.socketFile = this.configPath + '/apid-' + process.getuid() + '.socket';
     return this.pidFile = this.configPath + '/apid-' + process.getuid() + '.pid';
   };

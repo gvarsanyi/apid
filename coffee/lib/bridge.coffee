@@ -20,7 +20,7 @@ class Bridge extends ExposedApi
     home = process.env.HOME
     if process.platform is 'win32'
       home = process.env.USERPROFILE
-    @configPath = home + '/.config/' + name
+    @configPath = home + '/.config/' + @name
     @socketFile = @configPath + '/apid-' + process.getuid() + '.socket'
     @pidFile    = @configPath + '/apid-' + process.getuid() + '.pid'
 
