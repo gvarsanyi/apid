@@ -6,14 +6,18 @@ module.exports = function(daemon, name, cb) {
   notrunning = function() {
     var msg;
     console.log(msg = 'daemon is not running');
-    if (cmd === 'kill' || cmd === 'stop') {
+    if (cmd === 'status') {
+      return cb();
+    } else if (cmd === 'kill' || cmd === 'stop') {
       return cb(new Error(msg));
     }
   };
   running = function(pid) {
     var msg;
     console.log(msg = 'daemon is running: ' + name + ' (pid: ' + pid + ')');
-    if (cmd === 'start') {
+    if (cmd === 'status') {
+      return cb();
+    } else if (cmd === 'start') {
       return cb(new Error(msg));
     }
   };

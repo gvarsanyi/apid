@@ -5,12 +5,16 @@ module.exports = (daemon, name, cb) ->
 
   notrunning = ->
     console.log msg = 'daemon is not running'
-    if cmd in ['kill', 'stop']
+    if cmd is 'status'
+      cb()
+    else if cmd in ['kill', 'stop']
       cb new Error msg
 
   running = (pid) ->
     console.log msg = 'daemon is running: ' + name + ' (pid: ' + pid + ')'
-    if cmd is 'start'
+    if cmd is 'status'
+      cb()
+    else if cmd is 'start'
       cb new Error msg
 
   starting = ->

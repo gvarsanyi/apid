@@ -110,16 +110,22 @@ Note: the callback argument is optional. If not used, order of execution can not
 # Manual interaction with the daemon via the client (on terminal)
 ## Start
     node my-client.js --daemon-start
+This will exit after daemon is started. E.g. your code will run until the client connects.
 ## Stop
     node my-client.js --daemon-stop
+This will exit after daemon is started. E.g. your code will run until the client connects.
 ## Kill
     node my-client.js --daemon-kill
+This will exit after daemon is started. E.g. your code will run until the client connects.
 ## Restart
     node my-client.js --daemon-restart
+This will NOT exit after (re)starting daemon. E.g. your code will continue running after the status was output.
 ## Reload
     node my-client.js --daemon-reload
+This will NOT exit after (re)loading daemon. E.g. your code will continue running after the status was output.
 ## Status
     node my-client.js --daemon-status
+This will exit after daemon is started. E.g. your code will run until the client connects.
 ## Pick up STDOUT and/or STDERR of daemon
     node my-client.js --daemon-stdout --daemon-stderr
 
