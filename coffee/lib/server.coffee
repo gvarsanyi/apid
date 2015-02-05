@@ -105,7 +105,8 @@ module.exports = Server
 # Output files: ~/.config/<ID>/apid.out and ~/.config/<ID>/apid.err
 do ->
   fn = process.mainModule.filename
-  if fn.indexOf('node_modules/daemonize2/lib/wrapper.js') is fn.length - 38
+  mod_path = 'node_modules/daemonize2/lib/wrapper.js'
+  if (pos = fn.indexOf mod_path) > -1 and pos is fn.length - 38
     name = process.title
 
     home = process.env.HOME

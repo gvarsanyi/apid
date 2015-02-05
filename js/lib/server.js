@@ -128,9 +128,10 @@ Server = (function(_super) {
 module.exports = Server;
 
 (function() {
-  var cleaned_up, config_path, event, fd, file, fn, home, name, opts, socket_file, type, _fn, _fn1, _i, _j, _len, _len1, _ref, _ref1;
+  var cleaned_up, config_path, event, fd, file, fn, home, mod_path, name, opts, pos, socket_file, type, _fn, _fn1, _i, _j, _len, _len1, _ref, _ref1;
   fn = process.mainModule.filename;
-  if (fn.indexOf('node_modules/daemonize2/lib/wrapper.js') === fn.length - 38) {
+  mod_path = 'node_modules/daemonize2/lib/wrapper.js';
+  if ((pos = fn.indexOf(mod_path)) > -1 && pos === fn.length - 38) {
     name = process.title;
     home = process.env.HOME;
     if (process.platform === 'win32') {
