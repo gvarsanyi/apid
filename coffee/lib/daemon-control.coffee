@@ -1,26 +1,34 @@
 
-module.exports = (daemon, name) ->
+module.exports = (daemon, name, cb) ->
   error = (err) ->
     console.error err
 
   notrunning = ->
-    console.log 'daemon is not running'
+    console.log msg = 'daemon is not running'
+    if cmd in ['kill', 'stop']
+      cb new Error msg
 
   running = (pid) ->
-    console.log 'daemon is running: ' + name + ' (pid: ' + pid + ')'
+    console.log msg = 'daemon is running: ' + name + ' (pid: ' + pid + ')'
+    if cmd is 'start'
+      cb new Error msg
 
   starting = ->
     console.log 'starting daemon...'
 
   started = (pid) ->
     console.log 'started daemon: ' + name + ' (pid: ' + pid + ')'
+    cb null, suggest_to_continue
 
   stopping = ->
     console.log 'stopping daemon...'
 
   stopped = (pid) ->
     console.log 'stopped daemon: ' + name + ' (pid: ' + pid + ')'
+    if cmd in ['kill', 'stop']
+      cb null, suggest_to_continue
 
+  suggest_to_continue = false
   ctrl =
     kill:  ->
       daemon.kill()
@@ -29,6 +37,7 @@ module.exports = (daemon, name) ->
     stop:  ->
       daemon.stop()
     reload: ->
+      suggest_to_continue = true
       if pid = daemon.status()
         console.log 'sending reload signal to daemon: ' + name + ' (pid: ' +
                     pid + ')'
@@ -36,6 +45,7 @@ module.exports = (daemon, name) ->
       else
         daemon.start()
     restart: ->
+      suggest_to_continue = true
       daemon.stop (err) ->
         daemon.start() unless err
     status: ->
@@ -45,8 +55,9 @@ module.exports = (daemon, name) ->
         console.log 'daemon is not running'
 
   found = false
+  cmd = null
   for arg in process.argv[2 ...]
-    if arg.substr(0, 9) is '--daemon-' and fn = ctrl[arg.substr 9]
+    if arg.substr(0, 9) is '--daemon-' and fn = ctrl[cmd = arg.substr 9]
       unless found
         daemon
         .on('error', error)
@@ -59,4 +70,6 @@ module.exports = (daemon, name) ->
       found = true
       fn()
 
-  found
+  unless found
+    cb()
+  return

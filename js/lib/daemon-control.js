@@ -1,26 +1,39 @@
-module.exports = function(daemon, name) {
-  var arg, ctrl, error, fn, found, notrunning, running, started, starting, stopped, stopping, _i, _len, _ref;
+module.exports = function(daemon, name, cb) {
+  var arg, cmd, ctrl, error, fn, found, notrunning, running, started, starting, stopped, stopping, suggest_to_continue, _i, _len, _ref;
   error = function(err) {
     return console.error(err);
   };
   notrunning = function() {
-    return console.log('daemon is not running');
+    var msg;
+    console.log(msg = 'daemon is not running');
+    if (cmd === 'kill' || cmd === 'stop') {
+      return cb(new Error(msg));
+    }
   };
   running = function(pid) {
-    return console.log('daemon is running: ' + name + ' (pid: ' + pid + ')');
+    var msg;
+    console.log(msg = 'daemon is running: ' + name + ' (pid: ' + pid + ')');
+    if (cmd === 'start') {
+      return cb(new Error(msg));
+    }
   };
   starting = function() {
     return console.log('starting daemon...');
   };
   started = function(pid) {
-    return console.log('started daemon: ' + name + ' (pid: ' + pid + ')');
+    console.log('started daemon: ' + name + ' (pid: ' + pid + ')');
+    return cb(null, suggest_to_continue);
   };
   stopping = function() {
     return console.log('stopping daemon...');
   };
   stopped = function(pid) {
-    return console.log('stopped daemon: ' + name + ' (pid: ' + pid + ')');
+    console.log('stopped daemon: ' + name + ' (pid: ' + pid + ')');
+    if (cmd === 'kill' || cmd === 'stop') {
+      return cb(null, suggest_to_continue);
+    }
   };
+  suggest_to_continue = false;
   ctrl = {
     kill: function() {
       return daemon.kill();
@@ -33,6 +46,7 @@ module.exports = function(daemon, name) {
     },
     reload: function() {
       var pid;
+      suggest_to_continue = true;
       if (pid = daemon.status()) {
         console.log('sending reload signal to daemon: ' + name + ' (pid: ' + pid + ')');
         return daemon.sendSignal('SIGUSR1');
@@ -41,6 +55,7 @@ module.exports = function(daemon, name) {
       }
     },
     restart: function() {
+      suggest_to_continue = true;
       return daemon.stop(function(err) {
         if (!err) {
           return daemon.start();
@@ -57,10 +72,11 @@ module.exports = function(daemon, name) {
     }
   };
   found = false;
+  cmd = null;
   _ref = process.argv.slice(2);
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     arg = _ref[_i];
-    if (arg.substr(0, 9) === '--daemon-' && (fn = ctrl[arg.substr(9)])) {
+    if (arg.substr(0, 9) === '--daemon-' && (fn = ctrl[cmd = arg.substr(9)])) {
       if (!found) {
         daemon.on('error', error).on('notrunning', notrunning).on('running', running).on('started', started).on('starting', starting).on('stopped', stopped).on('stopping', stopping);
       }
@@ -68,5 +84,7 @@ module.exports = function(daemon, name) {
       fn();
     }
   }
-  return found;
+  if (!found) {
+    cb();
+  }
 };

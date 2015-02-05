@@ -43,7 +43,7 @@ Client = (function(_super) {
     mkdirp = require('mkdirp');
     return mkdirp(this.configPath, (function(_this) {
       return function(err) {
-        var buffer, buffer_count, connect, daemon, last_reconnect, listener_added, setup, timeout;
+        var daemon, setup, timeout;
         if (err) {
           return cb(err);
         }
@@ -64,78 +64,81 @@ Client = (function(_super) {
           timeout = 30;
         }
         daemon = require('daemonize2').setup(setup);
-        if (require('./daemon-control')(daemon, _this.name)) {
-          return;
-        }
-        listener_added = false;
-        last_reconnect = null;
-        connect = function() {
-          var handshake;
-          handshake = 0;
-          _this.socket = jot.connect(_this.socketFile, function() {
-            _this.revealExposed();
-            if (listener_added) {
-              return;
-            }
-            listener_added = true;
-            return _this.socket.on('data', function(data) {
-              var str;
-              if (data.std) {
-                if ((str = data.std.out) && (daemon_std.out || options.stdout)) {
-                  process.stdout.write('[APID STDOUT] ' + str);
+        return require('./daemon-control')(daemon, _this.name, function(err, proceed) {
+          var buffer, buffer_count, connect, last_reconnect, listener_added;
+          if (!proceed) {
+            process.exit(err ? 1 : 0);
+          }
+          listener_added = false;
+          last_reconnect = null;
+          connect = function() {
+            var handshake;
+            handshake = 0;
+            _this.socket = jot.connect(_this.socketFile, function() {
+              _this.revealExposed();
+              if (listener_added) {
+                return;
+              }
+              listener_added = true;
+              return _this.socket.on('data', function(data) {
+                var str;
+                if (data.std) {
+                  if ((str = data.std.out) && (daemon_std.out || options.stdout)) {
+                    process.stdout.write('[APID STDOUT] ' + str);
+                  }
+                  if ((str = data.std.err) && (daemon_std.err || options.stderr)) {
+                    return process.stderr.write('[APID STDERR] ' + str);
+                  }
+                } else if (data.api) {
+                  _this.attachRemote(data);
+                  handshake += 1;
+                  if (handshake === 2) {
+                    return _this.readyFlush(cb);
+                  }
+                } else if (data.ack) {
+                  handshake += 1;
+                  if (handshake === 2) {
+                    return _this.readyFlush(cb);
+                  }
+                } else if (data.req) {
+                  return _this.request(data.req);
+                } else {
+                  return _this.response(data != null ? data.res : void 0);
                 }
-                if ((str = data.std.err) && (daemon_std.err || options.stderr)) {
-                  return process.stderr.write('[APID STDERR] ' + str);
-                }
-              } else if (data.api) {
-                _this.attachRemote(data);
-                handshake += 1;
-                if (handshake === 2) {
-                  return _this.readyFlush(cb);
-                }
-              } else if (data.ack) {
-                handshake += 1;
-                if (handshake === 2) {
-                  return _this.readyFlush(cb);
-                }
-              } else if (data.req) {
-                return _this.request(data.req);
-              } else {
-                return _this.response(data != null ? data.res : void 0);
+              });
+            });
+            _this.socket.on('error', function(err) {
+              if (!(last_reconnect > (new Date).getTime() - 1000)) {
+                console.error('JOT socket error:', err);
+                console.log('Attempting to reconnect in .1s');
+                return setTimeout((function() {
+                  last_reconnect = (new Date).getTime();
+                  return connect();
+                }), 100);
               }
             });
+            return _this.socket.on('close', function() {
+              return _this.connectionLost('daemon');
+            });
+          };
+          buffer_count = 0;
+          buffer = function() {
+            return fs.exists(_this.socketFile, function(exists) {
+              if (timeout * 1000 < buffer_count * (buffer_count / 2) * 10) {
+                throw new Error('Socket wait exceeded timeout of ~' + timeout + 's');
+              } else if (exists) {
+                return setTimeout(connect, 1);
+              } else {
+                buffer_count += 1;
+                return setTimeout(buffer, buffer_count * 10);
+              }
+            });
+          };
+          daemon.on('started', buffer).on('running', connect).on('error', function(err) {
+            throw err;
           });
-          _this.socket.on('error', function(err) {
-            if (!(last_reconnect > (new Date).getTime() - 1000)) {
-              console.error('JOT socket error:', err);
-              console.log('Attempting to reconnect in .1s');
-              return setTimeout((function() {
-                last_reconnect = (new Date).getTime();
-                return connect();
-              }), 100);
-            }
-          });
-          return _this.socket.on('close', function() {
-            return _this.connectionLost('daemon');
-          });
-        };
-        buffer_count = 0;
-        buffer = function() {
-          return fs.exists(_this.socketFile, function(exists) {
-            if (timeout * 1000 < buffer_count * (buffer_count / 2) * 10) {
-              throw new Error('Socket wait exceeded timeout of ~' + timeout + 's');
-            } else if (exists) {
-              return setTimeout(connect, 1);
-            } else {
-              buffer_count += 1;
-              return setTimeout(buffer, buffer_count * 10);
-            }
-          });
-        };
-        daemon.on('started', buffer).on('running', connect).on('error', function(err) {
-          throw err;
+          return daemon.start();
         });
-        return daemon.start();
       };
     })(this));
   };
