@@ -89,6 +89,6 @@ module.exports = function(daemon, name, cb) {
     }
   }
   if (!found) {
-    cb();
+    cb(null, true);
   }
 };

@@ -75,5 +75,5 @@ module.exports = (daemon, name, cb) ->
       fn()
 
   unless found
-    cb()
+    cb null, true
   return
