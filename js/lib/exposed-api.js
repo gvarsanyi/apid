@@ -184,35 +184,9 @@ ExposedApi = (function(_super) {
   };
 
   ExposedApi.prototype.wrapCallback = function(cb) {
-    var check_log;
     cb = callbax(cb);
     cb.remote = this.remote;
     cb.session = this.remoteSession;
-    check_log = function(args, callback) {
-      if (typeof callback !== 'function' && (callback != null)) {
-        args.push(callback);
-        callback = function() {};
-      }
-      if (args.length) {
-        return callback;
-      } else {
-        return null;
-      }
-    };
-    cb.log = function() {
-      var args, callback, _i, _ref;
-      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
-      if (callback = check_log(args, callback)) {
-        return (_ref = cb.remote.console).log.apply(_ref, __slice.call(args).concat([callback]));
-      }
-    };
-    cb.errorLog = function() {
-      var args, callback, _i, _ref;
-      args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
-      if (callback = check_log(args, callback)) {
-        return (_ref = cb.remote.console).error.apply(_ref, __slice.call(args).concat([callback]));
-      }
-    };
     return cb;
   };
 

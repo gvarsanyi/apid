@@ -81,12 +81,12 @@ Fires up daemon
 Subscribes for "client is connected" event. This happens:
     - every time a client is connected and has fully exposed its features to the server, and
     - right before the server sends acknowledge message to client
-Callback function has exactly one argument: a metafunction that has exactly the same interface as regular callbacks (cb.remote, cb.session, cb.log, cb.errorLog) but will do nothing when called itself as cb()
+Callback function has exactly one argument: a metafunction that has exactly the same interface as regular callbacks (cb.remote, cb.session) but will do nothing when called itself as cb()
 
 ## .expose(key[, subkey[, subsubkey, ...]], function_reference) or apid.expose({key: {subkey: function_reference}})
 Exposes a function (or functions on an object) to make them available for connecting peers on the .remote object
 Asynchronous alert:
-- all exposed functions must take a callback function as their last argument
+- all exposed functions may take a callback function as their last argument
 - all callbacks should be called back with signiture: `callback(err[, arg1[, arg2, ...]]);` where err is an Error type or `null` or `undefined` if there was no error.
 Note: available on both client and apid.server instances.
 
@@ -103,9 +103,16 @@ Note:
 Container of exposed API on remote peer.
 See example daemon-entry.js above.
 
-## callback.log(args...[, callback]) and callback.errorLog(args...[, callback]) functions
-These methods will trigger client's console.log() and console.error() respectively.
-Note: the callback argument is optional. If not used, order of execution can not guaranteed, but generally events stay in order.
+## client.status(callback)
+Returns daemon status in a callback. Callback signiture is: `(err, pid)` where `err` will be null or an Error object (if daemon is not running) and `pid` will be null or process ID of the daemon
+
+## Automatically exposed on callback.remote
+### callback.remote.ping(callback)
+Ping remote
+### callback.remote.console.log(args...[, callback])
+Trigger remote's console.log() on client
+### callback.remote.console.error(args...[, callback])
+Trigger remote's console.error() on client
 
 # Manual interaction with the daemon via the client (on terminal)
 ## Start

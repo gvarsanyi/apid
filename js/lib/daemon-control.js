@@ -53,7 +53,8 @@ module.exports = function(daemon, name, cb) {
       suggest_to_continue = true;
       if (pid = daemon.status()) {
         console.log('sending reload signal to daemon: ' + name + ' (pid: ' + pid + ')');
-        return daemon.sendSignal('SIGUSR1');
+        daemon.sendSignal('SIGUSR1');
+        return cb(null, suggest_to_continue);
       } else {
         return daemon.start();
       }

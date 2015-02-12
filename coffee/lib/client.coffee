@@ -20,7 +20,6 @@ class Client extends Bridge
     super
     @setConfig name
 
-
   connect: (require_path, options, cb) =>
     @requirePath = require.resolve require_path
     unless typeof options is 'object'
@@ -47,9 +46,9 @@ class Client extends Bridge
       else if timeout > 30
         timeout = 30
 
-      daemon = require('daemonize2').setup setup
+      @daemon = require('daemonize2').setup setup
 
-      require('./daemon-control') daemon, @name, (err, proceed) =>
+      require('./daemon-control') @daemon, @name, (err, proceed) =>
         unless proceed
           process.exit if err then 1 else 0
 
@@ -87,8 +86,9 @@ class Client extends Bridge
 
           @socket.on 'error', (err) =>
             unless last_reconnect > (new Date).getTime() - 1000
-              console.error 'JOT socket error:', err
-              console.log 'Attempting to reconnect in .1s'
+              console.error '[daemon-cli] JOT socket error:', err
+              console.log '[daemon-client] Attempting to reconnect to', @name,
+                          ' in .1s'
               setTimeout (->
                 last_reconnect = (new Date).getTime()
                 connect()
@@ -109,12 +109,18 @@ class Client extends Bridge
               buffer_count += 1
               setTimeout buffer, buffer_count * 10
 
-        daemon
+        @daemon
         .on('started', buffer)
         .on('running', connect)
         .on('error', (err) -> throw err)
 
-        daemon.start()
+        @daemon.start()
+
+  status: (cb) =>
+    if pid = @daemon?.status()
+      return cb null, pid
+    cb new Error 'Not running'
+
 
 
 module.exports = Client

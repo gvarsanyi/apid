@@ -46,6 +46,7 @@ module.exports = (daemon, name, cb) ->
         console.log 'sending reload signal to daemon: ' + name + ' (pid: ' +
                     pid + ')'
         daemon.sendSignal 'SIGUSR1'
+        cb null, suggest_to_continue
       else
         daemon.start()
     restart: ->

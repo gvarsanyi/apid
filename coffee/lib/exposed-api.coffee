@@ -111,24 +111,8 @@ class ExposedApi extends RemoteApi
 
   wrapCallback: (cb) =>
     cb = callbax cb
-
     cb.remote  = @remote
     cb.session = @remoteSession
-
-    check_log = (args, callback) ->
-      if typeof callback isnt 'function' and callback?
-        args.push callback
-        callback = ->
-      if args.length then callback else null
-
-    cb.log = (args..., callback) ->
-      if callback = check_log args, callback
-        cb.remote.console.log args..., callback
-
-    cb.errorLog = (args..., callback) ->
-      if callback = check_log args, callback
-        cb.remote.console.error args..., callback
-
     cb
 
 

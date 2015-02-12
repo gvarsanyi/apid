@@ -24,7 +24,9 @@ class RemoteApi extends ReadyCue
     functionize = (keys) =>
       callbax (args..., cb) =>
         unless typeof cb is 'function'
-          throw new Error 'Callback function is required as last argument'
+          unless typeof cb is 'undefined'
+            args.push cb
+          cb = ->
 
         callback_id = (@remoteCallId += 1)
         (callbacks = @remoteCalls)[callback_id] = cb

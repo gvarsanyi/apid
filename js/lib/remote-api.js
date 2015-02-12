@@ -41,7 +41,10 @@ RemoteApi = (function(_super) {
           var args, callback_id, callbacks, cb, err, msg, _i;
           args = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), cb = arguments[_i++];
           if (typeof cb !== 'function') {
-            throw new Error('Callback function is required as last argument');
+            if (typeof cb !== 'undefined') {
+              args.push(cb);
+            }
+            cb = function() {};
           }
           callback_id = (_this.remoteCallId += 1);
           (callbacks = _this.remoteCalls)[callback_id] = cb;

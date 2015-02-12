@@ -28,6 +28,7 @@ Client = (function(_super) {
   Client.prototype.requirePath = null;
 
   function Client(name) {
+    this.status = __bind(this.status, this);
     this.connect = __bind(this.connect, this);
     Client.__super__.constructor.apply(this, arguments);
     this.setConfig(name);
@@ -43,7 +44,7 @@ Client = (function(_super) {
     mkdirp = require('mkdirp');
     return mkdirp(this.configPath, (function(_this) {
       return function(err) {
-        var daemon, setup, timeout;
+        var setup, timeout;
         if (err) {
           return cb(err);
         }
@@ -63,8 +64,8 @@ Client = (function(_super) {
         } else if (timeout > 30) {
           timeout = 30;
         }
-        daemon = require('daemonize2').setup(setup);
-        return require('./daemon-control')(daemon, _this.name, function(err, proceed) {
+        _this.daemon = require('daemonize2').setup(setup);
+        return require('./daemon-control')(_this.daemon, _this.name, function(err, proceed) {
           var buffer, buffer_count, connect, last_reconnect, listener_added;
           if (!proceed) {
             process.exit(err ? 1 : 0);
@@ -109,8 +110,8 @@ Client = (function(_super) {
             });
             _this.socket.on('error', function(err) {
               if (!(last_reconnect > (new Date).getTime() - 1000)) {
-                console.error('JOT socket error:', err);
-                console.log('Attempting to reconnect in .1s');
+                console.error('[daemon-cli] JOT socket error:', err);
+                console.log('[daemon-client] Attempting to reconnect to', _this.name, ' in .1s');
                 return setTimeout((function() {
                   last_reconnect = (new Date).getTime();
                   return connect();
@@ -134,13 +135,21 @@ Client = (function(_super) {
               }
             });
           };
-          daemon.on('started', buffer).on('running', connect).on('error', function(err) {
+          _this.daemon.on('started', buffer).on('running', connect).on('error', function(err) {
             throw err;
           });
-          return daemon.start();
+          return _this.daemon.start();
         });
       };
     })(this));
+  };
+
+  Client.prototype.status = function(cb) {
+    var pid, _ref1;
+    if (pid = (_ref1 = this.daemon) != null ? _ref1.status() : void 0) {
+      return cb(null, pid);
+    }
+    return cb(new Error('Not running'));
   };
 
   return Client;
